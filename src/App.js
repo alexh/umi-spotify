@@ -82,7 +82,6 @@ function App() {
       <Routes>
         <Route path="/" element={
           <>
-            <ViewSwitcher />
             <InternalApp 
               token={token}
               isPlaying={isPlaying}
@@ -99,29 +98,23 @@ function App() {
           </>
         } />
         <Route path="/car" element={
-          <>
-            <ViewSwitcher />
-            <CarView 
-              token={token}
-              isPlaying={isPlaying}
-              onPlayPause={handlePlayPause}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              currentSong={currentSong}
-              currentArtist={currentArtist}
-            />
-          </>
+          <CarView 
+            token={token}
+            isPlaying={isPlaying}
+            onPlayPause={handlePlayPause}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            currentSong={currentSong}
+            currentArtist={currentArtist}
+          />
         } />
         <Route path="/simple" element={
-          <>
-            <ViewSwitcher />
-            <SimpleMusicPage 
-              isPlaying={isPlaying}
-              currentSong={currentSong}
-              currentArtist={currentArtist}
-              playerControls={playerControls}
-            />
-          </>
+          <SimpleMusicPage 
+            isPlaying={isPlaying}
+            currentSong={currentSong}
+            currentArtist={currentArtist}
+            playerControls={playerControls}
+          />
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

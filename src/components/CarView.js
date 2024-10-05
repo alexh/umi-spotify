@@ -1,13 +1,13 @@
-import React, { useRef, useState, useEffect, Suspense, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useLoader, useThree, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { OrbitControls, PerspectiveCamera, Text, Instances, Instance } from '@react-three/drei';
-import { EffectComposer, ColorDepth, Pixelation } from '@react-three/postprocessing';
+import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { Effect } from 'postprocessing';
 import { Uniform } from 'three';
-import { debounce } from 'lodash';  // Add this import at the top of the file
+import { debounce } from 'lodash';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider } from './SharedComponents';
 import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
@@ -39,15 +39,11 @@ function OrangeFilter({ intensity = 1 }) {
   return <primitive object={effect} />;
 }
 
-function PixelationEffect({ pixelSize }) {
-  return <Pixelation granularity={pixelSize} />;
-}
-
 // Create a shared animation state
 const useAnimationState = () => {
   const ref = useRef({ y: 0, rotX: 0, rotZ: 0 });
   
-  useFrame((_, delta) => {
+  useFrame((_state, _delta) => {
     const time = Date.now() * 0.001;
     ref.current.y = Math.sin(time * 0.5) * 0.05;
     ref.current.rotX = Math.sin(time * 0.4) * 0.01;
@@ -57,7 +53,7 @@ const useAnimationState = () => {
   return ref;
 };
 
-function CarModel({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious }) {
+function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious }) {
   const gltf = useLoader(GLTFLoader, '/models/Flying_Car-.gltf');
   const modelRef = useRef();
   const animationState = useAnimationState();
@@ -215,50 +211,7 @@ function Dust({ count, size, speed }) {
   );
 }
 
-function DustControls({ dustSize, setDustSize, dustCount, setDustCount, dustSpeed, setDustSpeed, position, onPositionChange }) {
-  return (
-    <RetroWindow title="Dust Controls" position={position} onPositionChange={onPositionChange}>
-      <div>
-        <label>Size: {dustSize.toFixed(3)}</label>
-        <input
-          type="range"
-          min="0.01"
-          max="0.1"
-          step="0.001"
-          value={dustSize}
-          onChange={(e) => setDustSize(parseFloat(e.target.value))}
-          style={{ width: '100%', margin: '5px 0' }}
-        />
-      </div>
-      <div>
-        <label>Count: {dustCount}</label>
-        <input
-          type="range"
-          min="100"
-          max="2000"
-          step="100"
-          value={dustCount}
-          onChange={(e) => setDustCount(parseInt(e.target.value))}
-          style={{ width: '100%', margin: '5px 0' }}
-        />
-      </div>
-      <div>
-        <label>Speed: {dustSpeed.toFixed(1)}</label>
-        <input
-          type="range"
-          min="1"
-          max="20"
-          step="0.1"
-          value={dustSpeed}
-          onChange={(e) => setDustSpeed(parseFloat(e.target.value))}
-          style={{ width: '100%', margin: '5px 0' }}
-        />
-      </div>
-    </RetroWindow>
-  );
-}
-
-function Scene({ token, currentSong, setCurrentSong, children, orbitControlsRef, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
+function Scene({ token, currentSong, _setCurrentSong, children, orbitControlsRef, _pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
   useEffect(() => {
     console.log("Scene rendered with dust parameters:", { dustSize, dustCount, dustSpeed });
   }, [dustSize, dustCount, dustSpeed]);
@@ -292,13 +245,13 @@ function Scene({ token, currentSong, setCurrentSong, children, orbitControlsRef,
       />
       <EffectComposer>
         <OrangeFilter intensity={0.8} />
-        <Pixelation granularity={pixelSize * 30} />
+        <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
       </EffectComposer>
     </Suspense>
   );
 }
 
-function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, viewMode, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
+function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, _viewMode, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
   const orbitControlsRef = useRef();
 
   return (
@@ -397,9 +350,9 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   const [viewMode, setViewMode] = useState('firstPerson');
   const [zoom, setZoom] = useState(0.47);
   const [pixelSize, setPixelSize] = useState(0.31);
-  const [dustSize, setDustSize] = useState(0.02);
-  const [dustCount, setDustCount] = useState(1000);
-  const [dustSpeed, setDustSpeed] = useState(5);
+  const [dustSize] = useState(0.02);
+  const [dustCount] = useState(1000);
+  const [dustSpeed] = useState(5);
 
   const [windowPositions, setWindowPositions] = useState({
     pixelation: { x: 20, y: 80 },
@@ -423,8 +376,8 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
     setZoom(viewMode === 'firstPerson' ? 0.47 : 3);
   }, [viewMode]);
 
-  const handleMouseEnterUI = () => setIsInteractingWithUI(true);
-  const handleMouseLeaveUI = () => setIsInteractingWithUI(false);
+  const handleMouseEnterUI = useCallback(() => setIsInteractingWithUI(true), []);
+  const handleMouseLeaveUI = useCallback(() => setIsInteractingWithUI(false), []);
 
   return (
     <CRTEffect>
@@ -451,7 +404,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
         
         <div className="absolute inset-0 z-20 pointer-events-none">
           <NowPlayingOverlay currentSong={currentSong} artist={currentArtist} />
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto" onMouseEnter={handleMouseEnterUI} onMouseLeave={handleMouseLeaveUI}>
             <PixelationSlider 
               pixelSize={pixelSize} 
               setPixelSize={setPixelSize} 

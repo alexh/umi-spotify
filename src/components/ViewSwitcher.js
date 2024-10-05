@@ -14,7 +14,7 @@ function ViewSwitcher({ position, onPositionChange }) {
     }
   };
 
-  // Default position if not provided
+  // Provide a default position if it's not passed as a prop
   const defaultPosition = { x: window.innerWidth - 150, y: 20 };
   const safePosition = position || defaultPosition;
 

@@ -1,22 +1,16 @@
 import React from 'react';
-import { getLoginUrl } from '../spotifyApi';
 
-function Login({ onLogin }) {
+const Login = () => {
   const handleLogin = () => {
-    const loginUrl = getLoginUrl();
-    window.location.href = loginUrl;
+    // Implement your login logic here
   };
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <button
-        onClick={handleLogin}
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Login with Spotify
-      </button>
+    <div className="login">
+      <h2>Login to Spotify</h2>
+      <button onClick={handleLogin}>Login</button>
     </div>
   );
-}
+};
 
 export default Login;

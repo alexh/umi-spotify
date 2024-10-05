@@ -46,6 +46,12 @@ clean:
 	@rm -rf build
 	@rm -rf node_modules
 
+lint:
+	npm run lint
+
+lint-fix:
+	npm run lint -- --fix
+
 # Help command to list available targets
 .PHONY: help
 help:

@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 let globalPlayer = null;
 
-function Player({ token, playlist, isPlaying, onPlaybackStateChange, setPlayerControls }) {
+function Player({ token, playlist, _isPlaying, onPlaybackStateChange, setPlayerControls }) {
   const [isReady, setIsReady] = useState(false);
   const playerInitializedRef = useRef(false);
   const [activeDevice, setActiveDevice] = useState(null);
