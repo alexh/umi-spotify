@@ -7,8 +7,6 @@ import Player from './components/Player';
 import SpotifyPlayer from './components/SpotifyPlayer';
 import SimpleMusicPage from './components/SimpleMusicPage';
 import { getAccessToken, getUserProfile } from './spotifyApi';
-import { RetroWindow } from './components/SharedComponents';
-import ViewSwitcher from './components/ViewSwitcher';
 
 function LoadingSequence() {
   return (
