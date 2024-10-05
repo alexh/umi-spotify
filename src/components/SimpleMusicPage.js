@@ -26,9 +26,9 @@ function MerchWindow({ position, onPositionChange }) {
 
 function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls }) {
   const [windowPositions, setWindowPositions] = useState({
-    music: { x: window.innerWidth - 250, y: window.innerHeight - 200 },
-    merch: { x: window.innerWidth - 300, y: 200 },
-    switcher: { x: window.innerWidth - 150, y: 20 }
+    music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
+    merch: { x: window.innerWidth - 300, y: 230 },
+    switcher: { x: window.innerWidth - 300, y: 80 }
   });
   const [volume, setVolume] = useState(50);  // Initial volume set to 50%
 
@@ -58,7 +58,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
             position={windowPositions.music}
             onPositionChange={(newPos) => updateWindowPosition('music', newPos)}
           >
-            <div className="music-controls">
+            <div className="music-controls min-w-60">
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <button onClick={playerControls.previousTrack} style={{ flex: 1 }}>◀◀</button>
                 <button onClick={playerControls.togglePlay} style={{ flex: 1 }}>{isPlaying ? '||' : '▶'}</button>

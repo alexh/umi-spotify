@@ -358,9 +358,9 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
     pixelation: { x: 20, y: 80 },
     dust: { x: 20, y: 120 },
     view: { x: 20, y: window.innerHeight - 150 },
-    music: { x: window.innerWidth - 200, y: window.innerHeight - 120 },
-    merch: { x: window.innerWidth - 250, y: 80 },
-    switcher: { x: window.innerWidth - 150, y: 20 }
+    music: { x: window.innerWidth - 300, y: window.innerHeight - 120 },
+    merch: { x: window.innerWidth - 300, y: 280 },
+    switcher: { x: window.innerWidth - 300, y: 80 }
   });
 
   const [isInteractingWithUI, setIsInteractingWithUI] = useState(false);

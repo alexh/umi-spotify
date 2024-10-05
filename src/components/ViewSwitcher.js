@@ -15,7 +15,7 @@ function ViewSwitcher({ position, onPositionChange }) {
   };
 
   // Provide a default position if it's not passed as a prop
-  const defaultPosition = { x: window.innerWidth - 150, y: 20 };
+  const defaultPosition = { x: window.innerWidth - 250, y: 20 };
   const safePosition = position || defaultPosition;
 
   return (
@@ -26,7 +26,7 @@ function ViewSwitcher({ position, onPositionChange }) {
     >
       <button 
         onClick={switchView}
-        className="bg-[#CC4C19] text-white px-4 py-2 rounded hover:bg-[#FF8C00] transition-colors"
+        className="bg-[#CC4C19] text-white px-4 py-2 rounded hover:bg-[#FF8C00] transition-colors min-w-60"
       >
         Switch to {location.pathname === '/car' ? 'Simple' : 'Car'} View
       </button>
