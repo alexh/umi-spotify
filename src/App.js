@@ -20,7 +20,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSong, setCurrentSong] = useState("");
   const [currentArtist, setCurrentArtist] = useState("");
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(null);
   const [playlist, setPlaylist] = useState({ tracks: { items: [] } });
   const [playerControls, setPlayerControls] = useState({
     togglePlay: () => {},
