@@ -72,7 +72,7 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
 }
 
 export function NowPlayingOverlay({ currentSong, artist }) {
-  return (
+  return currentSong && (
     <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2 text-center">
       <div className="border-2 border-[#CC4C19] p-2">
         <div className="text-xl mb-1">Now Playing: {currentSong} by {artist}</div>
