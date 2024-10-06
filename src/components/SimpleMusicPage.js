@@ -72,7 +72,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
     merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
-    logout: { x: 20, y: window.innerHeight - 100 }, // Position for the logout window
+    logout: { x: 30, y: window.innerHeight - 160 }, // Position for the logout window
   });
 
   useEffect(() => {

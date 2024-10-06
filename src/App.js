@@ -106,7 +106,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
         <div className="relative z-10 flex flex-col items-center justify-center">
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
           <button 
-            className="bg-pantone-165-dark text-white text-shadow rounded-lg shadow-lg px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
+            className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
             onClick={handleStart}
           >
             Click to Start
@@ -156,16 +156,17 @@ function App() {
   const [currentSong, setCurrentSong] = useState("");
   const [currentArtist, setCurrentArtist] = useState("");
   const [token, setToken] = useState(null);
-  const [playlist, setPlaylist] = useState({ tracks: { items: [] } });
   const [playerControls, setPlayerControls] = useState({
     togglePlay: () => console.log("Toggle play not yet initialized"),
     nextTrack: () => console.log("Next track not yet initialized"),
     previousTrack: () => console.log("Previous track not yet initialized")
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const playerControlsRef = useRef(playerControls);
 
   const handleLogout = useCallback(() => {
+    console.log("Logging out");
     localStorage.removeItem('spotify_access_token');
     setToken(null);
   }, []);
@@ -186,36 +187,54 @@ function App() {
 
   useEffect(() => {
     const fetchToken = async () => {
-      const fetchedToken = getAccessToken();
+      // Check if the token is in the URL
+      const hash = window.location.hash
+        .substring(1)
+        .split('&')
+        .reduce((initial, item) => {
+          if (item) {
+            const parts = item.split('=');
+            initial[parts[0]] = decodeURIComponent(parts[1]);
+          }
+          return initial;
+        }, {});
+
+      let fetchedToken = hash.access_token;
+
+      if (fetchedToken) {
+        // If token is in URL, save it to localStorage
+        localStorage.setItem('spotify_access_token', fetchedToken);
+        // Remove the access token from the URL
+        window.location.hash = '';
+      } else {
+        // If not in URL, try to get from localStorage
+        fetchedToken = getAccessToken();
+      }
+
+      console.log("Fetched token:", fetchedToken);
       if (fetchedToken) {
         try {
           await getUserProfile(fetchedToken);
+          console.log("Token validated successfully");
           setToken(fetchedToken);
         } catch (error) {
           console.error("Token validation failed:", error);
           localStorage.removeItem('spotify_access_token');
-          setToken("");
+          setToken(null);
         }
+      } else {
+        console.log("No token found");
+        setToken(null);
       }
-      // Don't set isLoading to false here
+      setIsInitializing(false);
     };
 
     fetchToken();
-
-    return () => {
-      // Cleanup function
-      setToken(null);
-      setIsPlaying(false);
-      setCurrentSong("");
-      setCurrentArtist("");
-      setPlaylist({ tracks: { items: [] } });
-      setPlayerControls({
-        togglePlay: () => console.log("Toggle play not yet initialized"),
-        nextTrack: () => console.log("Next track not yet initialized"),
-        previousTrack: () => console.log("Previous track not yet initialized")
-      });
-    };
   }, []);
+
+  useEffect(() => {
+    playerControlsRef.current = playerControls;
+  }, [playerControls]);
 
   const handlePlaybackStateChange = useCallback((state) => {
     console.log("Playback state changed in App:", state);
@@ -224,18 +243,23 @@ function App() {
     setCurrentArtist(state.track?.artists?.map(artist => artist.name).join(', ') || "Unknown Artist");
   }, []);
 
-  useEffect(() => {
-    playerControlsRef.current = playerControls;
-  }, [playerControls]);
+  console.log("App render - Token:", token, "IsLoading:", isLoading, "IsInitializing:", isInitializing);
 
-  if (isLoading) {
-    return <LoadingSequence onLoadingComplete={handleLoadingComplete} onMusicStart={handleMusicStart} />;
+  if (isInitializing) {
+    return <div>Initializing...</div>;
   }
 
   if (!token) {
+    console.log("No token, rendering Login component");
     return <Login />;
   }
 
+  if (isLoading) {
+    console.log("Is loading, rendering LoadingSequence component");
+    return <LoadingSequence onLoadingComplete={handleLoadingComplete} onMusicStart={handleMusicStart} />;
+  }
+
+  console.log("Rendering main app content");
   return (
     <Router>
       <div className="bg-[#FF5F00] min-h-screen">
@@ -244,12 +268,12 @@ function App() {
           isPlaying={isPlaying}
           currentSong={currentSong}
           currentArtist={currentArtist}
-          playerControls={playerControls}  // Pass playerControls directly, not the ref
+          playerControls={playerControls}
           onLogout={handleLogout}
         />
         <Player
           token={token}
-          playlist={playlist}
+          // playlist={playlist}
           isPlaying={isPlaying}
           onPlaybackStateChange={handlePlaybackStateChange}
           setPlayerControls={(controls) => {

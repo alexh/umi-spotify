@@ -1,32 +1,7 @@
 import axios from 'axios';
 
 export const getAccessToken = () => {
-  // First, check if we have a token in localStorage
-  const storedToken = localStorage.getItem('spotify_access_token');
-  if (storedToken) {
-    return storedToken;
-  }
-
-  // If not in localStorage, check the URL hash
-  const hash = window.location.hash;
-  if (!hash) {
-    return null; // Return null if there's no hash (user hasn't logged in)
-  }
-
-  const token = hash
-    .substring(1)
-    .split('&')
-    .find(elem => elem.startsWith('access_token'))
-    ?.split('=')[1];
-
-  if (token) {
-    // If we found a token in the URL, store it in localStorage for future use
-    localStorage.setItem('spotify_access_token', token);
-    // Clear the hash from the URL
-    window.location.hash = '';
-  }
-
-  return token || null;
+  return localStorage.getItem('spotify_access_token');
 };
 
 export const getUserProfile = async (token) => {

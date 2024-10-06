@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 
 let globalPlayer = null;
 
-function Player({ token, playlist, _isPlaying, onPlaybackStateChange, setPlayerControls }) {
+function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls }) {
   const [isReady, setIsReady] = useState(false);
   const playerInitializedRef = useRef(false);
   const [activeDevice, setActiveDevice] = useState(null);
@@ -250,7 +250,7 @@ function Player({ token, playlist, _isPlaying, onPlaybackStateChange, setPlayerC
   }, [globalPlayer, fetchAudioAnalysis, onPlaybackStateChange, tempo]);
 
   useEffect(() => {
-    if (activeDevice && playlist.tracks.items.length > 0) {
+    if (activeDevice) {
       console.log("Transferring playback to web player");
       fetch(`https://api.spotify.com/v1/me/player`, {
         method: 'PUT',
@@ -292,9 +292,7 @@ function Player({ token, playlist, _isPlaying, onPlaybackStateChange, setPlayerC
         console.error('Error transferring playback, enabling shuffle, or starting playback:', error);
       });
     }
-  }, [activeDevice, playlist, token, playlistId]);
-
-  console.log('Current playlist:', playlist);
+  }, [activeDevice, token, playlistId]);
 
   return null; // This component doesn't render anything visible
 }
