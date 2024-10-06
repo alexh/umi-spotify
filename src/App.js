@@ -81,14 +81,14 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
     return (
       <CRTEffect>
         <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
-          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
+          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
           <pre className="text-pantone-165-darker text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
             {`
-     ___   __    _   _____ _              ____            
-    ( _ ) / /_  / | |_   _| |__   ___    / ___|___   __ _ 
-    / _ \\| '_ \\ | |   | | | '_ \\ /  _ \\ | |   / _ \\ / _\` |
-   | (_) | (_) || |   | | | | | |  __/  | |__| (_) | (_| |
-    \\___/ \\___(_) _|  |_| |_| |_|\\___|   \\____\\___/ \\__, |
+      ___   __    _   _____ _              ____            
+    / _ \\ / /_  / | |_   _| |__   ___    / ___|___   __ _ 
+   | (_) || '_ \\ | |   | | | '_ \\ /  _ \\ | |   / _ \\ / _\` |
+    \\__, | (_) || |   | | | | | |  __/  | |__| (_) | (_| |
+      /_/  \\___(_) _|  |_| |_| |_|\\___|   \\____\\___/ \\__, |
                                                       |___/ 
           `}
           </pre>
@@ -104,7 +104,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
     <CRTEffect>
       <div className="fixed inset-0 bg-[#FF5F00] z-50 font-receipt flex flex-col items-center justify-center">
         <div className="relative z-10 flex flex-col items-center justify-center">
-          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
+          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
           <button 
             className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
             onClick={handleStart}
@@ -177,12 +177,8 @@ function App() {
   }, []);
 
   const handleMusicStart = useCallback(() => {
-    console.log("Starting music playback");
-    if (playerControlsRef.current && playerControlsRef.current.togglePlay) {
-      playerControlsRef.current.togglePlay();
-    } else {
-      console.error("Player controls not available");
-    }
+    // No idea what is actually triggering the music start
+    // but its not here! lol
   }, []);
 
   useEffect(() => {
@@ -243,7 +239,9 @@ function App() {
     setCurrentArtist(state.track?.artists?.map(artist => artist.name).join(', ') || "Unknown Artist");
   }, []);
 
-  console.log("App render - Token:", token, "IsLoading:", isLoading, "IsInitializing:", isInitializing);
+  useEffect(() => {
+    console.log("App render - Token:", token, "IsLoading:", isLoading, "IsInitializing:", isInitializing);
+  }, [token, isLoading, isInitializing]);
 
   if (isInitializing) {
     return <div>Initializing...</div>;

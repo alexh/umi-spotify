@@ -63,7 +63,9 @@ function LogoutWindow({ onLogout, position, onPositionChange }) {
 }
 
 function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout }) {
-  console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
+  useEffect(() => {
+    console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
+  }, [isPlaying, currentSong, currentArtist, playerControls]);
 
   const [tempo, setTempo] = useState(null);
   const [volume, setVolume] = useState(50);

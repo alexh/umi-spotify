@@ -10,10 +10,11 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
   const [tempo, setTempo] = useState(null);
   const lastFetchedTrackId = useRef(null);
   const audioAnalysisCache = useRef({});
+  const fetchingTrackId = useRef(null);
 
   const fetchAudioAnalysis = useCallback(async (trackId) => {
-    if (trackId === lastFetchedTrackId.current) {
-      return; // Don't fetch if we've already fetched for this track
+    if (trackId === lastFetchedTrackId.current || fetchingTrackId.current === trackId) {
+      return;
     }
 
     if (audioAnalysisCache.current[trackId]) {
@@ -22,6 +23,8 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
       return;
     }
 
+    fetchingTrackId.current = trackId;
+
     try {
       const response = await fetch(`https://api.spotify.com/v1/audio-analysis/${trackId}`, {
         headers: {
@@ -29,12 +32,12 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
         },
       });
 
-      if (response.status === 429) {
-        console.log('Rate limit hit, retrying after delay');
-        const retryAfter = response.headers.get('Retry-After') || 5;
-        setTimeout(() => fetchAudioAnalysis(trackId), retryAfter * 1000);
-        return;
-      }
+      // if (response.status === 429) {
+      //   console.log('Rate limit hit, retrying after delay');
+      //   const retryAfter = parseInt(response.headers.get('Retry-After') || '5', 10);
+      //   setTimeout(() => fetchAudioAnalysis(trackId), retryAfter * 1000);
+      //   return;
+      // }
 
       const data = await response.json();
       if (data && data.track && typeof data.track.tempo === 'number') {
@@ -48,6 +51,8 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
     } catch (error) {
       console.error('Error fetching audio analysis:', error);
       setTempo(null);
+    } finally {
+      fetchingTrackId.current = null;
     }
   }, [token]);
 
@@ -122,14 +127,15 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
     }
 
     try {
-      // First, set shuffle mode to true
+      // Set shuffle mode to true
       await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=true&device_id=${activeDevice}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      // Then start playback in shuffle mode
+      
+      // Start playback in shuffle mode
       await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDevice}`, {
         method: 'PUT',
         headers: {
@@ -140,87 +146,94 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
           context_uri: `spotify:playlist:${playlistId}`,
         }),
       });
-      // // First, set shuffle mode to true
-      // await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=true&device_id=${activeDevice}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //   },
-      // });
+      
       console.log('Playback started in shuffle mode');
+      
+      // Ensure the player is playing
+      globalPlayer.resume().then(() => {
+        console.log("Playback ensured");
+      }).catch(error => {
+        console.error("Error ensuring playback:", error);
+      });
     } catch (error) {
       console.error('Error starting playback in shuffle mode:', error);
     }
   }, [activeDevice, token, playlistId]);
 
+  const playerControlsRef = useRef({
+    togglePlay: async () => {
+      console.log("Toggling play/pause");
+      try {
+        const state = await globalPlayer.getCurrentState();
+        if (!state) {
+          console.log('No current state, starting playback');
+          await startPlayback();
+        } else {
+          await globalPlayer.togglePlay();
+        }
+        const newState = await globalPlayer.getCurrentState();
+        if (newState) {
+          onPlaybackStateChange({
+            isPlaying: !newState.paused,
+            track: newState.track_window.current_track
+          });
+        }
+      } catch (error) {
+        console.error("Error in play/pause process:", error);
+      }
+    },
+    nextTrack: async () => {
+      console.log("Next track triggered");
+      try {
+        await globalPlayer.nextTrack();
+        const state = await globalPlayer.getCurrentState();
+        if (state) {
+          onPlaybackStateChange({
+            isPlaying: !state.paused,
+            track: state.track_window.current_track
+          });
+        }
+      } catch (error) {
+        console.error("Error changing to next track:", error);
+      }
+    },
+    previousTrack: async () => {
+      console.log("Previous track triggered");
+      try {
+        await globalPlayer.previousTrack();
+        const state = await globalPlayer.getCurrentState();
+        if (state) {
+          onPlaybackStateChange({
+            isPlaying: !state.paused,
+            track: state.track_window.current_track
+          });
+        }
+      } catch (error) {
+        console.error("Error changing to previous track:", error);
+      }
+    },
+    setVolume: async (volume) => {
+      console.log("Setting volume to:", volume);
+      try {
+        await globalPlayer.setVolume(volume);
+        console.log("Volume set successfully");
+      } catch (error) {
+        console.error("Error setting volume:", error);
+      }
+    },
+    getTempo: () => tempo,
+  });
+
   useEffect(() => {
     if (isReady && globalPlayer) {
-      console.log("Setting player controls");
-      setPlayerControls({
-        togglePlay: async () => {
-          console.log("Toggling play/pause");
-          try {
-            const state = await globalPlayer.getCurrentState();
-            if (!state) {
-              console.log('No current state, starting playback');
-              await startPlayback();
-            } else {
-              await globalPlayer.togglePlay();
-            }
-            const newState = await globalPlayer.getCurrentState();
-            if (newState) {
-              onPlaybackStateChange({
-                isPlaying: !newState.paused,
-                track: newState.track_window.current_track
-              });
-            }
-          } catch (error) {
-            console.error("Error in play/pause process:", error);
-          }
-        },
-        nextTrack: async () => {
-          console.log("Next track triggered");
-          try {
-            await globalPlayer.nextTrack();
-            const state = await globalPlayer.getCurrentState();
-            if (state) {
-              onPlaybackStateChange({
-                isPlaying: !state.paused,
-                track: state.track_window.current_track
-              });
-            }
-          } catch (error) {
-            console.error("Error changing to next track:", error);
-          }
-        },
-        previousTrack: async () => {
-          console.log("Previous track triggered");
-          try {
-            await globalPlayer.previousTrack();
-            const state = await globalPlayer.getCurrentState();
-            if (state) {
-              onPlaybackStateChange({
-                isPlaying: !state.paused,
-                track: state.track_window.current_track
-              });
-            }
-          } catch (error) {
-            console.error("Error changing to previous track:", error);
-          }
-        },
-        setVolume: async (volume) => {
-          console.log("Setting volume to:", volume);
-          try {
-            await globalPlayer.setVolume(volume);
-            console.log("Volume set successfully");
-          } catch (error) {
-            console.error("Error setting volume:", error);
-          }
-        },
-        getTempo: () => tempo,
-      });
+      console.log("Player ready, setting controls");
+      setPlayerControls(playerControlsRef.current);
     }
-  }, [isReady, setPlayerControls, onPlaybackStateChange, startPlayback, token, tempo, fetchAudioAnalysis]);
+  }, [isReady, setPlayerControls]);
+
+  useEffect(() => {
+    playerControlsRef.current.getTempo = () => tempo;
+  }, [tempo]);
 
   useEffect(() => {
     const handleTrackChange = async () => {
@@ -230,10 +243,12 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
         if (currentTrack.id !== lastFetchedTrackId.current) {
           fetchAudioAnalysis(currentTrack.id);
         }
+        
+        // Remove the auto-resume logic
         onPlaybackStateChange({
-          isPlaying: !state.paused,
+          isPlaying: !state.paused, // Report actual playing state
           track: currentTrack,
-          tempo: tempo,
+          tempo: audioAnalysisCache.current[currentTrack.id] || null,
         });
       }
     };
@@ -247,7 +262,7 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
         globalPlayer.removeListener('player_state_changed', handleTrackChange);
       }
     };
-  }, [globalPlayer, fetchAudioAnalysis, onPlaybackStateChange, tempo]);
+  }, [globalPlayer, fetchAudioAnalysis, onPlaybackStateChange]);
 
   useEffect(() => {
     if (activeDevice) {

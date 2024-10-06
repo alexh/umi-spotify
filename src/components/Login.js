@@ -4,7 +4,7 @@ import './Login.css';
 const Login = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const steps = [
-    "Welcome to 86.1 The Cog",
+    "Welcome to 96.1 The Cog",
     "Initializing audio drivers...",
     "Connecting to Spotify servers...",
     "Ready. Press LOGIN to continue."
@@ -30,7 +30,7 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-pantone-165 text-pantone-165-darker font-receipt">
       <div className="text-center bg-pantone-165-darker border-4 border-pantone-165 p-8 rounded-lg shadow-lg max-w-md w-full mx-4 retro-box min-w-[500px]">
-        <h1 className="text-6xl font-nickel mb-8 text-pantone-165">86.1 The Cog</h1>
+        <h1 className="text-6xl font-nickel mb-8 text-pantone-165">96.1 The Cog</h1>
         <div className="bg-pantone-165 text-pantone-165-darker p-2 mb-4 rounded text-left">
           {steps.map((step, index) => (
             <p key={index} className={`mb-2 ${index <= currentStep ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}>
