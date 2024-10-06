@@ -5,13 +5,13 @@ module.exports = {
     theme: {
       extend: {
         colors: {
-          'pantone-165': '#FF5F1F',
+          'pantone-165': '#FF5F00',
           'pantone-165-dark': '#CC4C19',
           'pantone-165-darker': '#963b18',
         },
         fontFamily: {
           'nickel': ['nickel-gothic-variable', 'sans-serif'],
-          'receipt': ['receipt-narrow', 'sans-serif'], // Added receipt-narrow font
+          'receipt': ['Receipt', 'Courier New', 'Courier', 'monospace'],
         },
       },
     },
