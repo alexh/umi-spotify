@@ -1,8 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import Analyzer from './Analyzer';
 
 let globalPlayer = null;
-let globalAnalyzer = null;
 
 function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls }) {
   const [isReady, setIsReady] = useState(false);
@@ -133,7 +131,6 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
     }
 
     try {
-      // Set shuffle mode to true
       await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=true&device_id=${activeDevice}`, {
         method: 'PUT',
         headers: {
@@ -141,7 +138,6 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
         },
       });
       
-      // Start playback in shuffle mode
       await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDevice}`, {
         method: 'PUT',
         headers: {
@@ -155,7 +151,6 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
       
       console.log('Playback started in shuffle mode');
       
-      // Ensure the player is playing
       globalPlayer.resume().then(() => {
         console.log("Playback ensured");
       }).catch(error => {
@@ -235,17 +230,6 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
       }
       return null;
     },
-    getAudioData: () => {
-      if (globalAnalyzer) {
-        return {
-          averageFrequency: globalAnalyzer.getAverageFrequency(),
-          bassFrequency: globalAnalyzer.getBassFrequency(),
-          trebleFrequency: globalAnalyzer.getTrebleFrequency(),
-          frequencyData: globalAnalyzer.getFrequencyData(),
-        };
-      }
-      return null;
-    },
   });
 
   useEffect(() => {
@@ -262,7 +246,6 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
         setVolume: playerControlsRef.current.setVolume,
         getTempo: playerControlsRef.current.getTempo,
         getCurrentTrack: playerControlsRef.current.getCurrentTrack,
-        getAudioData: playerControlsRef.current.getAudioData,
       });
     }
   }, [isReady, setPlayerControls]);
@@ -345,69 +328,6 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
       });
     }
   }, [activeDevice, token, playlistId]);
-
-  useEffect(() => {
-    const initializeAnalyzer = () => {
-      if (!globalPlayer || globalAnalyzer) return;
-
-      const audioElement = globalPlayer._options.getAudioElement();
-      if (!audioElement) {
-        console.error('Audio element not available');
-        return;
-      }
-
-      console.log('Initializing analyzer with audio element:', audioElement);
-
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      console.log('AudioContext created:', {
-        sampleRate: audioContext.sampleRate,
-        state: audioContext.state,
-        currentTime: audioContext.currentTime
-      });
-
-      const source = audioContext.createMediaElementSource(audioElement);
-      console.log('MediaElementSource created');
-
-      source.connect(audioContext.destination);
-      console.log('Source connected to audio context destination');
-
-      globalAnalyzer = new Analyzer();
-      globalAnalyzer.initialize(audioContext, source);
-      globalAnalyzer.start((data) => {
-        console.log('Audio data received in Player:', { 
-          dataLength: data.frequencyData.length,
-          nonZeroCount: data.frequencyData.filter(v => v > 0).length,
-          sampleValues: data.frequencyData.slice(0, 5),
-          averageFrequency: data.averageFrequency,
-          bassFrequency: data.bassFrequency,
-          trebleFrequency: data.trebleFrequency
-        });
-      });
-
-      // Update player controls to include the new analyzer
-      updatePlayerControls();
-    };
-
-    if (isReady && globalPlayer) {
-      console.log('Player ready, initializing analyzer');
-      initializeAnalyzer();
-    } else if (globalPlayer) {
-      console.log('Player not ready, waiting for ready event');
-      globalPlayer.addListener('ready', initializeAnalyzer);
-    } else {
-      console.log('Global player not available');
-    }
-
-    return () => {
-      if (globalAnalyzer) {
-        console.log('Stopping analyzer');
-        globalAnalyzer.stop();
-      }
-      if (globalPlayer) {
-        globalPlayer.removeListener('ready', initializeAnalyzer);
-      }
-    };
-  }, [isReady]);
 
   return null; // This component doesn't render anything visible
 }
