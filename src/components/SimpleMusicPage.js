@@ -63,25 +63,30 @@ function LogoutWindow({ onLogout, position, onPositionChange }) {
   );
 }
 
-function AlbumArtWindow({ albumArt, isIntro, position, onPositionChange }) {
+function AlbumArtWindow({ albumArt, isIntro, position, onPositionChange, trackUrl }) {
   return (
     <RetroWindow title="Now Playing" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center" style={{ width: '200px', height: '200px' }}>
+      <div className="flex flex-col items-center" style={{ width: '200px', height: '230px' }}>
         {isIntro ? (
           <video
             src="/Cog.mp4"
             autoPlay
             muted
             loop
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '200px', objectFit: 'cover' }}
           />
         ) : albumArt ? (
-          <img src={albumArt} alt="Album Art" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <a href={trackUrl} target="_blank" rel="noopener noreferrer">
+            <img src={albumArt} alt="Album Art" style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+          </a>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+          <div className="w-full h-[200px] flex items-center justify-center bg-gray-200 text-gray-500">
             No Album Art
           </div>
         )}
+        <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="mt-2">
+          <img src="/spotify.png" alt="Spotify Logo" className="h-6" />
+        </a>
       </div>
     </RetroWindow>
   );
@@ -151,6 +156,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const updateAudioDataRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [currentTrackUrl, setCurrentTrackUrl] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -174,8 +180,10 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         const track = await playerControls.getCurrentTrack();
         if (track && track.album && track.album.images && track.album.images.length > 0) {
           setCurrentAlbumArt(track.album.images[0].url);
+          setCurrentTrackUrl(track.spotifyUrl || null);
         } else {
           setCurrentAlbumArt(null);
+          setCurrentTrackUrl(null);
         }
       }
     };
@@ -236,6 +244,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         isIntro={isIntro}
         position={windowPositions.albumArt}
         onPositionChange={(newPos) => updateWindowPosition('albumArt', newPos)}
+        trackUrl={currentTrackUrl}
       />,
       <MusicControls 
         key="music"
@@ -303,7 +312,13 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         </div>
         
         <div className="relative z-20 w-full h-full">
-          <NowPlayingOverlay currentSong={currentSong} artist={currentArtist} score={score} isMobile={isMobile} />
+          <NowPlayingOverlay 
+            currentSong={currentSong} 
+            artist={currentArtist} 
+            score={score} 
+            isMobile={isMobile} 
+            trackUrl={currentTrackUrl}
+          />
           {renderWindows()}
         </div>
       </div>

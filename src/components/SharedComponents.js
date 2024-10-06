@@ -87,8 +87,8 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist, score, isMobile }) {
-  const marqueeText = `${currentSong} by ${artist} • `.repeat(10);
+export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackUrl }) {
+  const marqueeText = `${currentSong} by ${artist}`;
 
   return currentSong && (
     <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2">
@@ -96,7 +96,40 @@ export function NowPlayingOverlay({ currentSong, artist, score, isMobile }) {
         {!isMobile && <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>}
         <div className="flex-grow overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
-            <span className="inline-block px-4">{marqueeText}</span>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+            </a>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+            </a>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+            </a>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+            </a>
+          </div>
+          <div className="inline-block animate-marquee" aria-hidden="true">
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <span className="mr-8">{marqueeText}</span>
+            </a>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <span className="mr-8">{marqueeText}</span>
+            </a>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <span className="mr-8">{marqueeText}</span>
+            </a>
+            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <span className="mr-8">{marqueeText}</span>
+            </a>
           </div>
         </div>
         {!isMobile && (

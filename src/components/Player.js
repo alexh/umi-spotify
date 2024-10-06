@@ -226,7 +226,13 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
     getCurrentTrack: async () => {
       if (globalPlayer) {
         const state = await globalPlayer.getCurrentState();
-        return state?.track_window?.current_track;
+        if (state && state.track_window && state.track_window.current_track) {
+          const track = state.track_window.current_track;
+          return {
+            ...track,
+            spotifyUrl: track.uri ? `https://open.spotify.com/track/${track.uri.split(':')[2]}` : null
+          };
+        }
       }
       return null;
     },
