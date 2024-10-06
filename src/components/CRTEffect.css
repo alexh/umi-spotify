@@ -1,0 +1,127 @@
+body {
+  background: #FF5F00 none repeat scroll 0 0;
+  margin: 0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.crt-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.crt-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 2px;
+  z-index: 2;
+  opacity: 0.5;
+}
+
+.scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 10%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 100% 0.5rem;
+  animation: scanlines 6s linear infinite;
+  opacity: 0.3;
+}
+
+.crt-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/86186/crt.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.15;
+  z-index: 3;
+  pointer-events: none;
+}
+
+@keyframes scanlines {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+/* Existing styles for text flickering */
+.crt-text {
+  animation: constant-jitter 0.5s infinite;
+}
+
+.text-pulse {
+  animation: text-pulse 0.5s ease-in-out;
+}
+
+@keyframes constant-jitter {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(0.5px, 0.5px); }
+  50% { transform: translate(-0.5px, -0.5px); }
+  75% { transform: translate(-0.5px, 0.5px); }
+  100% { transform: translate(0.5px, -0.5px); }
+}
+
+@keyframes text-pulse {
+  0% { 
+    filter: drop-shadow(0 0 0 #FF5F00);
+    transform: skew(0deg);
+  }
+  50% { 
+    filter: drop-shadow(0 0 5px #FF5F00);
+    transform: skew(2deg);
+  }
+  100% { 
+    filter: drop-shadow(0 0 0 #FF5F00);
+    transform: skew(0deg);
+  }
+}

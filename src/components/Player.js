@@ -7,6 +7,49 @@ function Player({ token, playlist, _isPlaying, onPlaybackStateChange, setPlayerC
   const playerInitializedRef = useRef(false);
   const [activeDevice, setActiveDevice] = useState(null);
   const playlistId = '7FBYKQMPaOei5Fx2WcnhkU';
+  const [tempo, setTempo] = useState(null);
+  const lastFetchedTrackId = useRef(null);
+  const audioAnalysisCache = useRef({});
+
+  const fetchAudioAnalysis = useCallback(async (trackId) => {
+    if (trackId === lastFetchedTrackId.current) {
+      return; // Don't fetch if we've already fetched for this track
+    }
+
+    if (audioAnalysisCache.current[trackId]) {
+      setTempo(audioAnalysisCache.current[trackId]);
+      lastFetchedTrackId.current = trackId;
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/audio-analysis/${trackId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 429) {
+        console.log('Rate limit hit, retrying after delay');
+        const retryAfter = response.headers.get('Retry-After') || 5;
+        setTimeout(() => fetchAudioAnalysis(trackId), retryAfter * 1000);
+        return;
+      }
+
+      const data = await response.json();
+      if (data && data.track && typeof data.track.tempo === 'number') {
+        setTempo(data.track.tempo);
+        audioAnalysisCache.current[trackId] = data.track.tempo;
+        lastFetchedTrackId.current = trackId;
+      } else {
+        console.error('Invalid audio analysis data:', data);
+        setTempo(null);
+      }
+    } catch (error) {
+      console.error('Error fetching audio analysis:', error);
+      setTempo(null);
+    }
+  }, [token]);
 
   const initializePlayer = useCallback(() => {
     if (playerInitializedRef.current || !token || globalPlayer) return;
@@ -173,10 +216,38 @@ function Player({ token, playlist, _isPlaying, onPlaybackStateChange, setPlayerC
           } catch (error) {
             console.error("Error setting volume:", error);
           }
-        }
+        },
+        getTempo: () => tempo,
       });
     }
-  }, [isReady, setPlayerControls, onPlaybackStateChange, startPlayback, token]);
+  }, [isReady, setPlayerControls, onPlaybackStateChange, startPlayback, token, tempo, fetchAudioAnalysis]);
+
+  useEffect(() => {
+    const handleTrackChange = async () => {
+      const state = await globalPlayer.getCurrentState();
+      if (state) {
+        const currentTrack = state.track_window.current_track;
+        if (currentTrack.id !== lastFetchedTrackId.current) {
+          fetchAudioAnalysis(currentTrack.id);
+        }
+        onPlaybackStateChange({
+          isPlaying: !state.paused,
+          track: currentTrack,
+          tempo: tempo,
+        });
+      }
+    };
+
+    if (globalPlayer) {
+      globalPlayer.addListener('player_state_changed', handleTrackChange);
+    }
+
+    return () => {
+      if (globalPlayer) {
+        globalPlayer.removeListener('player_state_changed', handleTrackChange);
+      }
+    };
+  }, [globalPlayer, fetchAudioAnalysis, onPlaybackStateChange, tempo]);
 
   useEffect(() => {
     if (activeDevice && playlist.tracks.items.length > 0) {

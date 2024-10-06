@@ -1,10 +1,34 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { glitchShader, calculateGlitchIntensity } from '../utils/glitchEffect';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+
+const phrases = [
+  "Gears Turning, Time Burning",
+  "Maximum Torque, Minimum Talk",
+  "Metal And Mettle",
+  "Decibels And Deadlines",
+  "Calibrated Chaos",
+  "Wrenching Reality",
+  "Forged Under Pressure",
+  "Precision And Grit",
+  "Steel Nerves, Steel Toes",
+  "Machined Monotony",
+  "Fuel For The Grind",
+  "Engineered Endurance",
+  "Frequency Of Fatigue",
+  "Hard Hat Zone",
+  "Stamped And Shipped",
+  "Assembly Line Anthem",
+  "Cutting Through The Static",
+  "Music For Work",
+  "Designed With Thought"
+];
 
 const vertexShader = `
   uniform float u_time;
@@ -153,9 +177,200 @@ const pixelationShader = {
   `
 };
 
+function create3DText(scene, camera) {
+  const textMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      color: { value: new THREE.Color(0xCC4C19) }, // Darker orange
+      pulseColor: { value: new THREE.Color(0xFF5F00) }, // Lighter orange for pulsing
+      time: { value: 0 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 color;
+      uniform vec3 pulseColor;
+      uniform float time;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      void main() {
+        float intensity = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 4.0);
+        float pulse = (sin(time * 2.0) + 1.0) * 0.5; // Pulsing effect
+        vec3 finalColor = mix(color, pulseColor, pulse * 0.3); // Adjust 0.3 to control pulse intensity
+        gl_FragColor = vec4(mix(finalColor, vec3(1.0), intensity), 1.0);
+      }
+    `,
+  });
+
+  let textMesh = null;
+  const maxSpeed = 0.01;
+  let speed = { 
+    x: (Math.random() * 2 - 1) * maxSpeed, 
+    y: (Math.random() * 2 - 1) * maxSpeed 
+  };
+  const boundaryPadding = 0.1;
+  let cornerHits = 0;
+
+  // Add ambient light to the scene
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+  scene.add(ambientLight);
+
+  function animatePlusText(plusMesh) {
+    let animationFrames = 0;
+    function animate() {
+      plusMesh.position.y += 0.01;
+      plusMesh.material.opacity -= 0.02;
+      animationFrames++;
+
+      if (animationFrames < 50) {
+        requestAnimationFrame(animate);
+      } else {
+        scene.remove(plusMesh);
+      }
+    }
+    animate();
+  }
+
+  function updateText(previousPosition = null, previousSpeed = null) {
+    if (textMesh) scene.remove(textMesh);
+
+    const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+    
+    // Use the FontLoader to load the local font file
+    const loader = new FontLoader();
+    loader.load('/Receipt_Narrow_Regular.json', function(font) {
+      const textGeometry = new TextGeometry(phrase, {
+        font: font,
+        size: 0.5,
+        height: 0.1,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 0,
+        bevelSegments: 5
+      });
+
+      textGeometry.computeBoundingBox();
+      const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+      const textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
+
+      // Center the geometry
+      textGeometry.translate(-textWidth / 2, -textHeight / 2, 0);
+
+      textMesh = new THREE.Mesh(textGeometry, textMaterial);
+      if (previousPosition) {
+        textMesh.position.copy(previousPosition);
+        speed = previousSpeed;
+      } else {
+        textMesh.position.set(0, 0, -5);
+      }
+      scene.add(textMesh);
+
+      // Use window dimensions for boundary
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      // Convert window dimensions to 3D space coordinates
+      const aspectRatio = windowWidth / windowHeight;
+      const vFov = camera.fov * Math.PI / 180;
+      const height = 2 * Math.tan(vFov / 2) * Math.abs(textMesh.position.z) + 6;
+      const width = height * aspectRatio;
+
+      console.log('Window dimensions:', { width: windowWidth, height: windowHeight });
+      console.log('3D space dimensions:', { width, height });
+      console.log('Text dimensions:', { width: textWidth, height: textHeight });
+
+      function animateText() {
+        if (!textMesh) return;  // Add this check
+
+        textMesh.position.x += speed.x;
+        textMesh.position.y += speed.y;
+
+        // Update the time uniform for pulsing effect
+        textMaterial.uniforms.time.value += 0.016; // Assuming 60fps, adjust as needed
+
+        const leftBound = -width / 2 + textWidth / 2 + boundaryPadding;
+        const rightBound = width / 2 - textWidth / 2 - boundaryPadding;
+        const topBound = height / 2 - textHeight / 2 - boundaryPadding;
+        const bottomBound = -height / 2 + textHeight / 2 + boundaryPadding;
+
+        let hitCorner = false;
+
+        if (textMesh.position.x <= leftBound || textMesh.position.x >= rightBound) {
+          speed.x *= -1;
+          textMesh.position.x = Math.max(leftBound, Math.min(rightBound, textMesh.position.x));
+          console.log('Horizontal bounce at:', textMesh.position.x);
+          hitCorner = Math.abs(textMesh.position.y - topBound) < 0.1 || Math.abs(textMesh.position.y - bottomBound) < 0.1;
+        }
+        if (textMesh.position.y <= bottomBound || textMesh.position.y >= topBound) {
+          speed.y *= -1;
+          textMesh.position.y = Math.max(bottomBound, Math.min(topBound, textMesh.position.y));
+          console.log('Vertical bounce at:', textMesh.position.y);
+          hitCorner = hitCorner || Math.abs(textMesh.position.x - leftBound) < 0.1 || Math.abs(textMesh.position.x - rightBound) < 0.1;
+        }
+
+        // Enforce max speed after bounces
+        speed.x = Math.sign(speed.x) * Math.min(Math.abs(speed.x), maxSpeed);
+        speed.y = Math.sign(speed.y) * Math.min(Math.abs(speed.y), maxSpeed);
+
+        // Check if it hit a corner
+        if (hitCorner) {
+          cornerHits++;
+          console.log(`Corner hit! Total hits: ${cornerHits}`);
+          
+          // Create and animate +100 text
+          const plusGeometry = new TextGeometry('+100', {
+            font: font,
+            size: 0.2,
+            height: 0.05,
+          });
+          const plusMesh = new THREE.Mesh(plusGeometry, textMaterial);
+          plusMesh.position.copy(textMesh.position);
+          plusMesh.position.y += 0.5;
+          scene.add(plusMesh);
+
+          // Animate the +100 text
+          animatePlusText(plusMesh);
+        }
+
+        textMesh.lookAt(camera.position);
+
+        requestAnimationFrame(animateText);
+      }
+
+      animateText();
+    });
+  }
+
+  // Modify the interval to use a callback
+  function scheduleNextUpdate() {
+    setTimeout(() => {
+      if (textMesh) {
+        const previousPosition = textMesh.position.clone();
+        const previousSpeed = { ...speed };
+        updateText(previousPosition, previousSpeed);
+      } else {
+        updateText();
+      }
+      scheduleNextUpdate();
+    }, 10000);
+  }
+
+  updateText();
+  scheduleNextUpdate();
+}
+
 function Visualizer({ isPlaying, volume, audioAnalysis }) {
   const mountRef = useRef(null);
-  const sceneRef = useRef(null);
+  const gearSceneRef = useRef(null);
+  const textSceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
   const meshRef = useRef(null);
@@ -167,6 +382,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
   const isPlayingRef = useRef(isPlaying);
   const targetRotationRef = useRef({ y: 0, z: 0 });
   const currentRotationRef = useRef({ y: 0, z: 0 });
+  const [font, setFont] = useState(null);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -179,21 +395,33 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
 
     // Scene setup
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: false }); // Disable antialiasing for pixelation effect
+    const camera = new THREE.PerspectiveCamera(64, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
 
     renderer.setSize(width, height);
-    renderer.setClearColor(0xFF5F1F, 1); // Set background to Pantone 165
-    mountRef.current.appendChild(renderer.domElement);
+    renderer.setClearColor(0xFF5F00, 1); // Set the background color to #FF5F00
+    mountRef.current?.appendChild(renderer.domElement);
 
     camera.position.z = 5;
+
+    // Add ambient light to the main scene
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    scene.add(ambientLight);
+
+    // Text scene setup
+    const textScene = new THREE.Scene();
+
+    gearSceneRef.current = scene;
+    textSceneRef.current = textScene;
+    cameraRef.current = camera;
+    rendererRef.current = renderer;
 
     // Material setup
     const material = new THREE.ShaderMaterial({
       uniforms: uniformsRef.current,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
-      wireframe: false, // Change this to false to see the full surface
+      wireframe: false,
     });
 
     // Load the gear model
@@ -208,7 +436,6 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
           }
         });
         
-        // Center the model
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
         
@@ -216,7 +443,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
           child.position.sub(center);
         });
 
-        model.scale.set(1.7, 1.7, 1.7); // Fixed scale, no dynamic scaling
+        model.scale.set(1.7, 1.7, 1.7);
         scene.add(model);
         meshRef.current = model;
       },
@@ -228,24 +455,26 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
       }
     );
 
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    rendererRef.current = renderer;
-
     const clock = new THREE.Clock();
 
-    // Post-processing setup
-    const composer = new EffectComposer(renderer);
+    // Post-processing setup for gear scene
+    const gearComposer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
+    gearComposer.addPass(renderPass);
 
     const glitchPass = new ShaderPass(glitchShader);
-    composer.addPass(glitchPass);
+    gearComposer.addPass(glitchPass);
 
     const pixelPass = new ShaderPass(pixelationShader);
     pixelPass.uniforms["resolution"].value = new THREE.Vector2(width, height);
     pixelPass.uniforms["pixelSize"].value = 1;
-    composer.addPass(pixelPass);
+    gearComposer.addPass(pixelPass);
+
+    // Load font for 3D text
+    const fontLoader = new FontLoader();
+    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
+      setFont(loadedFont);
+    });
 
     // Animation
     const animate = () => {
@@ -253,7 +482,6 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
       uniformsRef.current.u_time.value = elapsedTime;
       
       if (meshRef.current) {
-        // Smoothly interpolate rotation
         currentRotationRef.current.y += (targetRotationRef.current.y - currentRotationRef.current.y) * 0.1;
         meshRef.current.rotation.y = currentRotationRef.current.y;
 
@@ -269,13 +497,22 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
       glitchPass.uniforms.time.value = elapsedTime;
       glitchPass.uniforms.glitchIntensity.value = glitchIntensity;
 
-      // Pulsing pixelation effect
-      const pulseFrequency = 0.1; // 1 / 10 seconds
-      const pulseMagnitude = 15; // Maximum pixel size
+      const pulseFrequency = 0.1;
+      const pulseMagnitude = 15;
       const pixelSize = 1 + Math.abs(Math.sin(elapsedTime * Math.PI * pulseFrequency)) * pulseMagnitude;
       pixelPass.uniforms["pixelSize"].value = pixelSize;
 
-      composer.render();
+      // Render gear scene with effects
+      gearComposer.render();
+
+      // Render text scene without effects
+      renderer.autoClear = false;
+      renderer.clearDepth();
+      renderer.render(textSceneRef.current, camera);
+
+      // Ensure the background color is set every frame
+      renderer.setClearColor(0xFF5F00, 1);
+
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -288,8 +525,12 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
-      composer.setSize(newWidth, newHeight);
+      gearComposer.setSize(newWidth, newHeight);
       pixelPass.uniforms["resolution"].value.set(newWidth, newHeight);
+      // Update other necessary components
+      if (font && textSceneRef.current && camera) {
+        create3DText(textSceneRef.current, camera);
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -299,12 +540,39 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      mountRef.current.removeChild(renderer.domElement);
+      // Check if mountRef.current still exists before removing child
+      if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      // Dispose of Three.js objects
+      scene.traverse((object) => {
+        if (object.geometry) {
+          object.geometry.dispose();
+        }
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(material => material.dispose());
+          } else {
+            object.material.dispose();
+          }
+        }
+      });
+      renderer.dispose();
+      if (gearComposer) {
+        gearComposer.dispose();
+      }
     };
   }, [audioAnalysis, isPlaying]);
+
+  useEffect(() => {
+    if (font && textSceneRef.current && cameraRef.current) {
+      create3DText(textSceneRef.current, cameraRef.current);
+    }
+  }, [font]);
 
   console.log("Visualizer render", { isPlaying, volume, hasAudioAnalysis: !!audioAnalysis });
 
   return <div ref={mountRef} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />;
 }
+
 export default React.memo(Visualizer);

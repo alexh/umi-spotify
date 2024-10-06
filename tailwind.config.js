@@ -11,7 +11,16 @@ module.exports = {
         },
         fontFamily: {
           'nickel': ['nickel-gothic-variable', 'sans-serif'],
-          'receipt': ['Receipt', 'Courier New', 'Courier', 'monospace'],
+          'receipt': ['receipt-narrow', 'monospace'],
+        },
+        keyframes: {
+          marquee: {
+            '0%': { transform: 'translateX(0%)' },
+            '100%': { transform: 'translateX(-50%)' },
+          },
+        },
+        animation: {
+          'marquee': 'marquee 30s linear infinite',
         },
       },
     },

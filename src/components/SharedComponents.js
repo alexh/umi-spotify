@@ -50,11 +50,12 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   return (
     <div 
       ref={windowRef}
-      className="absolute bg-[#FF8C00] border-2 border-[#CC4C19] rounded-none shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF8C00] p-0.5 font-receipt text-black"
+      className="absolute bg-[#FF5F00] border-2 border-[#CC4C19] rounded-none shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] p-0.5 font-receipt text-black"
       style={{
         left: `${localPosition.x}px`,
         top: `${localPosition.y}px`,
         cursor: isDragging ? 'grabbing' : 'grab',
+        maxWidth: '300px', // Ensure it doesn't exceed this width
       }}
     >
       <div 
@@ -64,18 +65,28 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
       >
         <span>{title}</span>
       </div>
-      <div className="p-2" style={{ cursor: 'default' }}>
+      <div className="p-2" style={{ cursor: 'default', overflowX: 'hidden' }}>
         {children}
       </div>
     </div>
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist }) {
+export function NowPlayingOverlay({ currentSong, artist, score }) {
+  const marqueeText = `${currentSong} by ${artist} • `.repeat(10); // Repeat the text to ensure it's long enough
+
   return currentSong && (
-    <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2 text-center">
-      <div className="border-2 border-[#CC4C19] p-2">
-        <div className="text-xl mb-1">Now Playing: {currentSong} by {artist}</div>
+    <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2">
+      <div className="border-2 border-[#CC4C19] p-2 flex items-center">
+        <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>
+        <div className="flex-grow overflow-hidden whitespace-nowrap">
+          <div className="inline-block animate-marquee">
+            <span className="inline-block px-4">{marqueeText}</span>
+          </div>
+        </div>
+        <div className="text-xl whitespace-nowrap pl-4">
+          <a href="https://utility.materials.nyc">Utility Materials Inc.</a>
+        </div>
       </div>
     </div>
   );

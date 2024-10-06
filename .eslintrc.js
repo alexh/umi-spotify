@@ -20,7 +20,7 @@ module.exports = {
   rules: {
     'react/prop-types': 'off',
     'react/no-unknown-property': ['error', { ignore: ['object', 'args', 'intensity', 'position', 'rotation', 'transparent'] }],
-    'no-unused-vars': ['error', { "argsIgnorePattern": "^_" }],
+    'no-unused-vars': ['warn', { "argsIgnorePattern": "^_" }],
   },
   settings: {
     react: {

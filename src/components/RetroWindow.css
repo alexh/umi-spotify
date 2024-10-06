@@ -1,0 +1,25 @@
+.retro-window {
+  position: absolute;
+  width: 300px;
+  max-width: 300px;
+  background-color: #FF5F00;
+  border: 2px solid #CC4C19;
+  color: #000000;
+  font-family: 'Courier New', Courier, monospace;
+  z-index: 10001;
+  overflow: hidden;
+}
+
+.retro-window-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  cursor: move;
+  background-color: #CC4C19;
+  padding: 5px;
+}
+
+.retro-window-content {
+  overflow-y: auto;
+  max-height: calc(100vh - 100px);
+  padding: 10px;
+}

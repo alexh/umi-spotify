@@ -1,31 +1,73 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import CarView from './components/CarView';
-import InternalApp from './InternalApp';
 import Login from './components/Login';
 import Player from './components/Player';
-import SpotifyPlayer from './components/SpotifyPlayer';
 import SimpleMusicPage from './components/SimpleMusicPage';
 import { getAccessToken, getUserProfile } from './spotifyApi';
 
-function LoadingSequence() {
+function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   const [loadingStep, setLoadingStep] = useState(0);
+  const [isLoadingComplete, setIsLoadingComplete] = useState(false);
   const loadingSteps = [
     "Initializing system...",
     "Loading core components...",
     "Connecting to Spotify...",
     "Preparing audio drivers...",
     "Calibrating visual interface...",
+    "Optimizing playback engine...",
+    "Synchronizing playlists...",
+    "Tuning radio frequencies...",
+    "Polishing the cogs...",
+    "Adjusting gear ratios...",
+    "Lubricating sprockets...",
+    "Tightening bolts...",
+    "Aligning drive shafts...",
+    "Charging capacitors...",
+    "Priming fuel injectors...",
+    "Engaging clutch...",
+    "Revving up the engine...",
+    "Checking oil pressure...",
+    "Testing suspension...",
     "Ready to launch!"
   ];
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setLoadingStep((prevStep) => (prevStep < loadingSteps.length - 1 ? prevStep + 1 : prevStep));
-    }, 1000);
+    const totalDuration = 6000; // 6 seconds in milliseconds
+    const stepDuration = totalDuration / loadingSteps.length;
+    let timer;
 
-    return () => clearInterval(timer);
-  }, []);
+    const advanceLoading = (step) => {
+      if (step < loadingSteps.length) {
+        setLoadingStep(step);
+        timer = setTimeout(() => advanceLoading(step + 1), stepDuration);
+      } else {
+        setIsLoadingComplete(true);
+      }
+    };
+
+    advanceLoading(0);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [loadingSteps.length]);
+
+  const handleStart = () => {
+    // Immediately complete loading and advance to main screen
+    onLoadingComplete();
+
+    // Play intro sound and start music when it's done
+    const audio = new Audio(Math.random() < 0.5 ? '/cog1.mp3' : '/cog2.mp3');
+    audio.play().then(() => {
+      audio.addEventListener('ended', () => {
+        onMusicStart();
+      });
+    }).catch(error => {
+      console.error("Error playing audio:", error);
+      onMusicStart();
+    });
+  };
 
   const progressBar = (progress) => {
     const barLength = 20;
@@ -33,88 +75,56 @@ function LoadingSequence() {
     return '[' + '='.repeat(filledLength) + ' '.repeat(barLength - filledLength) + ']';
   };
 
-  return (
-    <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-mono">
-      <div className="text-black text-4xl font-bold mb-8 animate-pulse">UMI OS v1.0</div>
-      <pre className="text-black text-xl mb-4 whitespace-pre-wrap text-center">
-        {`
-   _    _ __  __ _____    ____   _____ 
-  | |  | |  \\/  |_   _|  / __ \\ / ____|
-  | |  | | \\  / | | |   | |  | | (___  
-  | |  | | |\\/| | | |   | |  | |\\___ \\ 
-  | |__| | |  | |_| |_  | |__| |____) |
-   \\____/|_|  |_|_____|  \\____/|_____/ 
+  if (!isLoadingComplete) {
+    return (
+      <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
+        <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-pulse text-shadow">86.1 The Cog</div>
+        <pre className="text-pantone-165-darker text-xl mb-4 whitespace-pre-wrap text-center">
+          {`
+   ___   __    _   _____ _              ____            
+  ( _ ) / /_  / | |_   _| |__   ___    / ___|___   __ _ 
+  / _ \\| '_ \\ | |   | | | '_ \\ /  _ \\ | |   / _ \\ / _\` |
+ | (_) | (_) || |   | | | | | |  __/  | |__| (_) | (_| |
+  \\___/ \\___(_) _|  |_| |_| |_|\\___|   \\____\\___/ \\__, |
+                                                |___/ 
         `}
-      </pre>
-      <div className="text-black text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>
-      <div className="text-black text-xl mb-4">{Math.round(((loadingStep + 1) / loadingSteps.length) * 100)}%</div>
-      <div className="text-black text-lg">{loadingSteps[loadingStep]}</div>
+        </pre>
+        <div className="text-pantone-165-darker font-receipt text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>
+        <div className="text-pantone-165-darker font-receipt text-xl mb-4">{Math.round(((loadingStep + 1) / loadingSteps.length) * 100)}%</div>
+        <div className="text-pantone-165-darker font-receipt text-lg">{loadingSteps[loadingStep]}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
+      <button 
+        className="bg-pantone-165-dark text-white px-4 py-2 rounded mt-4"
+        onClick={handleStart}
+      >
+        Click to Start
+      </button>
     </div>
   );
 }
 
-function AppContent({ token, isPlaying, currentSong, currentArtist, playlist, playerControls, handlePlaybackStateChange, setPlaylist }) {
-  const location = useLocation();
-  const [showLoading, setShowLoading] = useState(true);
-
-  useEffect(() => {
-    // Show loading only on initial page load
-    if (location.pathname === '/simple' && showLoading) {
-      const timer = setTimeout(() => setShowLoading(false), 6000); // 6 seconds loading time
-      return () => clearTimeout(timer);
-    } else {
-      setShowLoading(false);
-    }
-  }, [location, showLoading]);
-
-  const handlePlayPause = useCallback(() => {
-    console.log("Play/Pause triggered in App");
-    playerControls.togglePlay();
-  }, [playerControls]);
-
-  const handleNext = useCallback(() => {
-    console.log("Next track triggered in App");
-    playerControls.nextTrack();
-  }, [playerControls]);
-
-  const handlePrevious = useCallback(() => {
-    console.log("Previous track triggered in App");
-    playerControls.previousTrack();
-  }, [playerControls]);
-
-  if (showLoading) {
-    return <LoadingSequence />;
-  }
+function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout }) {
+  console.log('AppContent rendering', { token, isPlaying, currentSong, currentArtist, playerControls });
 
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/simple" replace />} />
-      <Route path="/internal" element={
-        <>
-          <InternalApp 
-            token={token}
-            isPlaying={isPlaying}
-            currentSong={currentSong}
-            currentArtist={currentArtist}
-            setPlaylist={setPlaylist}
-          />
-          <SpotifyPlayer
-            token={token}
-            playlist={playlist}
-            isPlaying={isPlaying}
-            onPlaybackStateChange={handlePlaybackStateChange}
-          />
-        </>
-      } />
       <Route path="/car" element={
         <CarView 
           token={token}
           isPlaying={isPlaying}
-          onPlayPause={handlePlayPause}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
+          onPlayPause={playerControls.togglePlay}
+          onNext={playerControls.nextTrack}
+          onPrevious={playerControls.previousTrack}
           currentSong={currentSong}
           currentArtist={currentArtist}
+          onLogout={onLogout}
+          playerControls={playerControls}
         />
       } />
       <Route path="/simple" element={
@@ -123,6 +133,7 @@ function AppContent({ token, isPlaying, currentSong, currentArtist, playlist, pl
           currentSong={currentSong}
           currentArtist={currentArtist}
           playerControls={playerControls}
+          onLogout={onLogout}
         />
       } />
       <Route path="*" element={<Navigate to="/simple" replace />} />
@@ -137,11 +148,31 @@ function App() {
   const [token, setToken] = useState(null);
   const [playlist, setPlaylist] = useState({ tracks: { items: [] } });
   const [playerControls, setPlayerControls] = useState({
-    togglePlay: () => {},
-    nextTrack: () => {},
-    previousTrack: () => {}
+    togglePlay: () => console.log("Toggle play not yet initialized"),
+    nextTrack: () => console.log("Next track not yet initialized"),
+    previousTrack: () => console.log("Previous track not yet initialized")
   });
   const [isLoading, setIsLoading] = useState(true);
+  const playerControlsRef = useRef(playerControls);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('spotify_access_token');
+    setToken(null);
+  }, []);
+
+  const handleLoadingComplete = useCallback(() => {
+    console.log("Loading sequence completed");
+    setIsLoading(false);
+  }, []);
+
+  const handleMusicStart = useCallback(() => {
+    console.log("Starting music playback");
+    if (playerControlsRef.current && playerControlsRef.current.togglePlay) {
+      playerControlsRef.current.togglePlay();
+    } else {
+      console.error("Player controls not available");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -156,10 +187,24 @@ function App() {
           setToken("");
         }
       }
-      setIsLoading(false);
+      // Don't set isLoading to false here
     };
 
     fetchToken();
+
+    return () => {
+      // Cleanup function
+      setToken(null);
+      setIsPlaying(false);
+      setCurrentSong("");
+      setCurrentArtist("");
+      setPlaylist({ tracks: { items: [] } });
+      setPlayerControls({
+        togglePlay: () => console.log("Toggle play not yet initialized"),
+        nextTrack: () => console.log("Next track not yet initialized"),
+        previousTrack: () => console.log("Previous track not yet initialized")
+      });
+    };
   }, []);
 
   const handlePlaybackStateChange = useCallback((state) => {
@@ -169,8 +214,12 @@ function App() {
     setCurrentArtist(state.track?.artists?.map(artist => artist.name).join(', ') || "Unknown Artist");
   }, []);
 
+  useEffect(() => {
+    playerControlsRef.current = playerControls;
+  }, [playerControls]);
+
   if (isLoading) {
-    return <LoadingSequence />;
+    return <LoadingSequence onLoadingComplete={handleLoadingComplete} onMusicStart={handleMusicStart} />;
   }
 
   if (!token) {
@@ -185,17 +234,18 @@ function App() {
           isPlaying={isPlaying}
           currentSong={currentSong}
           currentArtist={currentArtist}
-          playlist={playlist}
-          playerControls={playerControls}
-          handlePlaybackStateChange={handlePlaybackStateChange}
-          setPlaylist={setPlaylist}
+          playerControls={playerControls}  // Pass playerControls directly, not the ref
+          onLogout={handleLogout}
         />
         <Player
           token={token}
           playlist={playlist}
           isPlaying={isPlaying}
           onPlaybackStateChange={handlePlaybackStateChange}
-          setPlayerControls={setPlayerControls}
+          setPlayerControls={(controls) => {
+            setPlayerControls(controls);
+            playerControlsRef.current = controls;
+          }}
         />
       </div>
     </Router>

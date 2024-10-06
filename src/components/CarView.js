@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense } from 'react';
-import { useLoader, useThree, useFrame } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { useThree, useFrame } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera, Text, useGLTF } from '@react-three/drei';
+import { EffectComposer, Bloom, Pixelation } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { Effect } from 'postprocessing';
@@ -11,6 +10,7 @@ import { debounce } from 'lodash';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider } from './SharedComponents';
 import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
+import FOVSlider from './FOVSlider';
 
 class OrangeFilterEffect extends Effect {
   constructor({ intensity = 1.0 } = {}) {
@@ -54,15 +54,14 @@ const useAnimationState = () => {
 };
 
 function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious }) {
-  const gltf = useLoader(GLTFLoader, '/models/Flying_Car-.gltf');
+  const { scene } = useGLTF('/models/Flying_Car-.gltf', true);
   const modelRef = useRef();
   const animationState = useAnimationState();
 
   useEffect(() => {
-    console.log("CarModel rendered, gltf:", gltf);
-    if (gltf.scene) {
+    if (scene) {
       console.log("GLTF scene loaded, traversing children:");
-      gltf.scene.traverse((child) => {
+      scene.traverse((child) => {
         console.log("Child:", child.name, child.type);
         if (child.isMesh) {
           console.log("Mesh found:", child.name);
@@ -81,7 +80,7 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
         }
       });
     }
-  }, [gltf]);
+  }, [scene]);
 
   useFrame(() => {
     if (modelRef.current) {
@@ -91,14 +90,13 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
     }
   });
 
-  if (!gltf.scene) {
-    console.log("GLTF scene not loaded");
+  if (!scene) {
     return null;
   }
 
   return (
     <primitive 
-      object={gltf.scene} 
+      object={scene} 
       ref={modelRef} 
       position={[-0.70, -1.70, -0.80]} 
       rotation={[0, 0, 0]} 
@@ -106,10 +104,11 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
   );
 }
 
-function CameraController({ zoom }) {
+function CameraController({ zoom, fov }) {
   const { camera } = useThree();
   useFrame(() => {
     camera.position.lerp(new THREE.Vector3(0, 0.7 * zoom, -2.1 * zoom), 0.1);
+    camera.fov = fov;
     camera.updateProjectionMatrix();
   });
   return null;
@@ -211,7 +210,7 @@ function Dust({ count, size, speed }) {
   );
 }
 
-function Scene({ token, currentSong, _setCurrentSong, children, orbitControlsRef, _pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
+function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
   useEffect(() => {
     console.log("Scene rendered with dust parameters:", { dustSize, dustCount, dustSpeed });
   }, [dustSize, dustCount, dustSpeed]);
@@ -246,12 +245,13 @@ function Scene({ token, currentSong, _setCurrentSong, children, orbitControlsRef
       <EffectComposer>
         <OrangeFilter intensity={0.8} />
         <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
+        <Pixelation granularity={pixelSize * 30} /> {/* Change PixelationEffect to Pixelation */}
       </EffectComposer>
     </Suspense>
   );
 }
 
-function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, _viewMode, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
+function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI, fov }) {
   const orbitControlsRef = useRef();
 
   return (
@@ -265,8 +265,8 @@ function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevi
       dustSpeed={dustSpeed}
       isInteractingWithUI={isInteractingWithUI}
     >
-      <PerspectiveCamera makeDefault fov={75} />
-      <CameraController zoom={zoom} />
+      <PerspectiveCamera makeDefault fov={fov} />
+      <CameraController zoom={zoom} fov={fov} />
       <CarModel 
         token={token}
         currentSong={currentSong}
@@ -279,7 +279,7 @@ function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevi
   );
 }
 
-function MusicControls({ isPlaying, onPlayPause, onNext, onPrevious, position, onPositionChange }) {
+function MusicControls({ isPlaying, onPlayPause, onNext, onPrevious, volume, onVolumeChange, position, onPositionChange }) {
   const debouncedPlayPause = useCallback(
     debounce(() => {
       onPlayPause();
@@ -303,10 +303,21 @@ function MusicControls({ isPlaying, onPlayPause, onNext, onPrevious, position, o
 
   return (
     <RetroWindow title="Music Controls" position={position} onPositionChange={onPositionChange}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={debouncedPrevious} style={{ flex: 1 }}>◀◀</button>
-        <button onClick={debouncedPlayPause} style={{ flex: 1 }}>{isPlaying ? '||' : '▶'}</button>
-        <button onClick={debouncedNext} style={{ flex: 1 }}>▶▶</button>
+      <div className="music-controls min-w-60">
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <button onClick={debouncedPrevious} style={{ flex: 1 }}>◀◀</button>
+          <button onClick={debouncedPlayPause} style={{ flex: 1 }}>{isPlaying ? '||' : '▶'}</button>
+          <button onClick={debouncedNext} style={{ flex: 1 }}>▶▶</button>
+        </div>
+        <div>
+          <label htmlFor="volume" style={{ display: 'block', marginBottom: '5px' }}>Volume: </label>
+          <OrangeSlider
+            value={volume}
+            onChange={onVolumeChange}
+            min={0}
+            max={100}
+          />
+        </div>
       </div>
     </RetroWindow>
   );
@@ -346,21 +357,24 @@ function MerchWindow({ position, onPositionChange }) {
   );
 }
 
-export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist }) {
+export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, playerControls }) {
   const [viewMode, setViewMode] = useState('firstPerson');
   const [zoom, setZoom] = useState(0.47);
-  const [pixelSize, setPixelSize] = useState(0.31);
+  const [pixelSize, setPixelSize] = useState(0.3); // Change initial value to 0.01
   const [dustSize] = useState(0.02);
   const [dustCount] = useState(1000);
   const [dustSpeed] = useState(5);
+  const [volume, setVolume] = useState(50);  // Initial volume set to 50%
+  const [fov, setFOV] = useState(75); // Default FOV
 
   const [windowPositions, setWindowPositions] = useState({
     pixelation: { x: 20, y: 80 },
     dust: { x: 20, y: 120 },
     view: { x: 20, y: window.innerHeight - 150 },
-    music: { x: window.innerWidth - 300, y: window.innerHeight - 120 },
-    merch: { x: window.innerWidth - 300, y: 280 },
-    switcher: { x: window.innerWidth - 300, y: 80 }
+    music: { x: window.innerWidth - 300, y: window.innerHeight - 160 },
+    merch: { x: window.innerWidth - 300, y: 220 },
+    switcher: { x: window.innerWidth - 300, y: 80 },
+    fov: { x: 20, y: window.innerHeight - 220 },
   });
 
   const [isInteractingWithUI, setIsInteractingWithUI] = useState(false);
@@ -379,26 +393,51 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   const handleMouseEnterUI = useCallback(() => setIsInteractingWithUI(true), []);
   const handleMouseLeaveUI = useCallback(() => setIsInteractingWithUI(false), []);
 
+  const handleVolumeChange = useCallback((newVolume) => {
+    setVolume(newVolume);
+    // Assuming you have a method to set volume in your Spotify player
+    // If not, you'll need to implement this
+    // playerControls.setVolume(newVolume / 100);
+  }, []);
+
+  const [tempo, setTempo] = useState(null);
+
+  useEffect(() => {
+    const updateTempo = () => {
+      if (playerControls && typeof playerControls.getTempo === 'function') {
+        setTempo(playerControls.getTempo());
+      }
+    };
+
+    updateTempo();
+    const intervalId = setInterval(updateTempo, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [playerControls]);
+
   return (
-    <CRTEffect>
+    <CRTEffect isPlaying={isPlaying} tempo={tempo}>
       <div className="relative w-screen h-screen">
         <div className="absolute inset-0 z-10">
           <Canvas>
-            <CarView3D 
-              token={token}
-              currentSong={currentSong}
-              isPlaying={isPlaying}
-              onPlayPause={onPlayPause}
-              onNext={onNext}
-              onPrevious={onPrevious}
-              viewMode={viewMode}
-              zoom={zoom}
-              pixelSize={pixelSize}
-              dustSize={dustSize}
-              dustCount={dustCount}
-              dustSpeed={dustSpeed}
-              isInteractingWithUI={isInteractingWithUI}
-            />
+            <Suspense fallback={null}>
+              <CarView3D 
+                token={token}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                onPlayPause={onPlayPause}
+                onNext={onNext}
+                onPrevious={onPrevious}
+                viewMode={viewMode}
+                zoom={zoom}
+                pixelSize={pixelSize}
+                dustSize={dustSize}
+                dustCount={dustCount}
+                dustSpeed={dustSpeed}
+                isInteractingWithUI={isInteractingWithUI}
+                fov={fov}
+              />
+            </Suspense>
           </Canvas>
         </div>
         
@@ -422,6 +461,8 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
               onPlayPause={onPlayPause}
               onNext={onNext}
               onPrevious={onPrevious}
+              volume={volume}
+              onVolumeChange={handleVolumeChange}
               position={windowPositions.music}
               onPositionChange={(newPos) => updateWindowPosition('music', newPos)}
             />
@@ -439,3 +480,6 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
     </CRTEffect>
   );
 }
+
+// Preload the model
+useGLTF.preload('/models/Flying_Car-.gltf');
