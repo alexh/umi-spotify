@@ -5,12 +5,15 @@ export const getAccessToken = () => {
 };
 
 export const getUserProfile = async (token) => {
-  const response = await axios.get('https://api.spotify.com/v1/me', {
+  const response = await fetch('https://api.spotify.com/v1/me', {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
     },
   });
-  return response.data;
+  if (!response.ok) {
+    throw new Error('Failed to fetch user profile');
+  }
+  return response.json();
 };
 
 export const getPlaylist = async (token, playlistId) => {

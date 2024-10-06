@@ -190,8 +190,12 @@ function App() {
   }, []);
 
   const handleMusicStart = useCallback(() => {
-    // No idea what is actually triggering the music start
-    // but its not here! lol
+    console.log("Music start triggered");
+    if (playerControlsRef.current && playerControlsRef.current.togglePlay) {
+      playerControlsRef.current.togglePlay();
+    } else {
+      console.error("Player controls not available for music start");
+    }
   }, []);
 
   const handlePlaybackStateChange = useCallback((state) => {
@@ -202,12 +206,14 @@ function App() {
   }, []);
 
   const setPlayerControlsMemoized = useCallback((controls) => {
+    console.log("Setting player controls:", controls);
     setPlayerControls(controls);
     playerControlsRef.current = controls;
   }, []);
 
   useEffect(() => {
     const fetchToken = async () => {
+      console.log("Fetching token...");
       // Check if the token is in the URL
       const hash = window.location.hash
         .substring(1)
@@ -223,18 +229,18 @@ function App() {
       let fetchedToken = hash.access_token;
 
       if (fetchedToken) {
-        // If token is in URL, save it to localStorage
+        console.log("Token found in URL, saving to localStorage");
         localStorage.setItem('spotify_access_token', fetchedToken);
-        // Remove the access token from the URL
         window.location.hash = '';
       } else {
-        // If not in URL, try to get from localStorage
+        console.log("Token not found in URL, checking localStorage");
         fetchedToken = getAccessToken();
       }
 
-      console.log("Fetched token:", fetchedToken);
+      console.log("Fetched token:", fetchedToken ? "Token exists" : "No token");
       if (fetchedToken) {
         try {
+          console.log("Validating token with Spotify API");
           await getUserProfile(fetchedToken);
           console.log("Token validated successfully");
           setToken(fetchedToken);
@@ -244,7 +250,7 @@ function App() {
           setToken(null);
         }
       } else {
-        console.log("No token found");
+        console.log("No token found, user needs to log in");
         setToken(null);
       }
       setIsInitializing(false);
@@ -258,7 +264,7 @@ function App() {
   }, [playerControls]);
 
   useEffect(() => {
-    console.log("App render - Token:", token, "IsLoading:", isLoading, "IsInitializing:", isInitializing);
+    console.log("App render - Token:", token ? "Token exists" : "No token", "IsLoading:", isLoading, "IsInitializing:", isInitializing);
   }, [token, isLoading, isInitializing]);
 
   if (isInitializing) {
