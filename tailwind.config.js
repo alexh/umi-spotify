@@ -18,9 +18,14 @@ module.exports = {
             '0%': { transform: 'translateX(0%)' },
             '100%': { transform: 'translateX(-50%)' },
           },
+          textPulse: {
+            '0%, 100%': { color: '#FF5F00' },
+            '50%': { color: '#CC4C19' },
+          },
         },
         animation: {
           'marquee': 'marquee 30s linear infinite',
+          'textPulse': 'textPulse 2s ease-in-out infinite',
         },
       },
     },

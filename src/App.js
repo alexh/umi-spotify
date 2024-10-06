@@ -4,6 +4,8 @@ import CarView from './components/CarView';
 import Login from './components/Login';
 import Player from './components/Player';
 import SimpleMusicPage from './components/SimpleMusicPage';
+import MatrixRain from './components/MatrixRain';
+import CRTEffect from './components/CRTEffect';
 import { getAccessToken, getUserProfile } from './spotifyApi';
 
 function LoadingSequence({ onLoadingComplete, onMusicStart }) {
@@ -33,7 +35,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   ];
 
   useEffect(() => {
-    const totalDuration = 6000; // 6 seconds in milliseconds
+    const totalDuration = 4000; // 6 seconds in milliseconds
     const stepDuration = totalDuration / loadingSteps.length;
     let timer;
 
@@ -77,34 +79,42 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
 
   if (!isLoadingComplete) {
     return (
-      <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
-        <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-pulse text-shadow">86.1 The Cog</div>
-        <pre className="text-pantone-165-darker text-xl mb-4 whitespace-pre-wrap text-center">
-          {`
-   ___   __    _   _____ _              ____            
-  ( _ ) / /_  / | |_   _| |__   ___    / ___|___   __ _ 
-  / _ \\| '_ \\ | |   | | | '_ \\ /  _ \\ | |   / _ \\ / _\` |
- | (_) | (_) || |   | | | | | |  __/  | |__| (_) | (_| |
-  \\___/ \\___(_) _|  |_| |_| |_|\\___|   \\____\\___/ \\__, |
-                                                |___/ 
-        `}
-        </pre>
-        <div className="text-pantone-165-darker font-receipt text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>
-        <div className="text-pantone-165-darker font-receipt text-xl mb-4">{Math.round(((loadingStep + 1) / loadingSteps.length) * 100)}%</div>
-        <div className="text-pantone-165-darker font-receipt text-lg">{loadingSteps[loadingStep]}</div>
-      </div>
+      <CRTEffect>
+        <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
+          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
+          <pre className="text-pantone-165-darker text-xl mb-4 whitespace-pre-wrap text-center">
+            {`
+     ___   __    _   _____ _              ____            
+    ( _ ) / /_  / | |_   _| |__   ___    / ___|___   __ _ 
+    / _ \\| '_ \\ | |   | | | '_ \\ /  _ \\ | |   / _ \\ / _\` |
+   | (_) | (_) || |   | | | | | |  __/  | |__| (_) | (_| |
+    \\___/ \\___(_) _|  |_| |_| |_|\\___|   \\____\\___/ \\__, |
+                                                      |___/ 
+          `}
+          </pre>
+          <div className="text-pantone-165-darker font-receipt text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>
+          <div className="text-pantone-165-darker font-receipt text-xl mb-4">{Math.round(((loadingStep + 1) / loadingSteps.length) * 100)}%</div>
+          <div className="text-pantone-165-darker font-receipt text-lg">{loadingSteps[loadingStep]}</div>
+        </div>
+      </CRTEffect>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
-      <button 
-        className="bg-pantone-165-dark text-white px-4 py-2 rounded mt-4"
-        onClick={handleStart}
-      >
-        Click to Start
-      </button>
-    </div>
+    <CRTEffect>
+      <div className="fixed inset-0 bg-[#FF5F00] z-50 font-receipt flex flex-col items-center justify-center">
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
+          <button 
+            className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
+            onClick={handleStart}
+          >
+            Click to Start
+          </button>
+        </div>
+        <MatrixRain />
+      </div>
+    </CRTEffect>
   );
 }
 
