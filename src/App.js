@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import CarView from './components/CarView';
 import Login from './components/Login';
 import Player from './components/Player';
@@ -82,7 +82,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
       <CRTEffect>
         <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
-          <pre className="text-pantone-165-darker text-xl mb-4 whitespace-pre-wrap text-center">
+          <pre className="text-pantone-165-darker text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
             {`
      ___   __    _   _____ _              ____            
     ( _ ) / /_  / | |_   _| |__   ___    / ___|___   __ _ 

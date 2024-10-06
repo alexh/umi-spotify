@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import './CRTEffect.css';
 
 const CRTEffect = ({ children, isPlaying, tempo }) => {
-  const containerRef = useRef(null);
 
   useEffect(() => {
     console.log("CRTEffect updated:", { isPlaying, tempo });

@@ -53,7 +53,7 @@ function LogoutWindow({ onLogout, position, onPositionChange }) {
       <div className="flex flex-col items-center">
         <button 
           onClick={onLogout}
-          className="bg-pantone-165-dark text-pantone-165-darker px-4 py-2 rounded hover:bg-pantone-165-darker transition-colors duration-300"
+          className="bg-pantone-165-dark text-white px-4 py-2 rounded hover:bg-pantone-165-darker transition-colors duration-300"
         >
           Logout
         </button>
@@ -72,7 +72,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
     merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
-    logout: { x: 20, y: window.innerHeight - 150 }, // Position for the logout window
+    logout: { x: 20, y: window.innerHeight - 100 }, // Position for the logout window
   });
 
   useEffect(() => {
