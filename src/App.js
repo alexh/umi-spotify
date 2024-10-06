@@ -127,7 +127,7 @@ function AppContent({ token, isPlaying, currentSong, currentArtist, playerContro
           playerControls={playerControls}
         />
       } />
-      <Route path="/simple" element={
+      <Route path="/visualizer" element={
         <SimpleMusicPage 
           isPlaying={isPlaying}
           currentSong={currentSong}
@@ -136,7 +136,7 @@ function AppContent({ token, isPlaying, currentSong, currentArtist, playerContro
           onLogout={onLogout}
         />
       } />
-      <Route path="*" element={<Navigate to="/simple" replace />} />
+      <Route path="*" element={<Navigate to="/visualizer" replace />} />
     </Routes>
   );
 }
