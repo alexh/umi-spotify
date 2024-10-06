@@ -5,6 +5,13 @@ import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
 import EditorEffects from './EditorEffects';
 
+// Add this function at the top of the file
+function isMobileDevice() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return mobileRegex.test(userAgent) || (window.innerWidth <= 768);
+}
+
 function MerchWindow({ position, onPositionChange }) {
   return (
     <RetroWindow title="Merch" position={position} onPositionChange={onPositionChange}>
@@ -155,12 +162,12 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const updateCurrentTrackRef = useRef(null);
   const updateAudioDataRef = useRef(null);
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(isMobileDevice());
   const [currentTrackUrl, setCurrentTrackUrl] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(isMobileDevice());
     };
 
     window.addEventListener('resize', handleResize);

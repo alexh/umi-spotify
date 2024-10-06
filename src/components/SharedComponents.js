@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
+// Add this function at the top of the file
+function isMobileDevice() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return mobileRegex.test(userAgent) || (window.innerWidth <= 768);
+}
+
 export function RetroWindow({ title, children, position, onPositionChange }) {
   const [isDragging, setIsDragging] = useState(false);
   const [localPosition, setLocalPosition] = useState(position);
   const dragStartRef = useRef(null);
   const windowRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(isMobileDevice());
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -50,7 +57,7 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(isMobileDevice());
     };
 
     window.addEventListener('resize', handleResize);
@@ -88,12 +95,23 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
 }
 
 export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackUrl }) {
+  const [localIsMobile, setLocalIsMobile] = useState(isMobileDevice());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setLocalIsMobile(isMobileDevice());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const marqueeText = `${currentSong} by ${artist}`;
 
   return currentSong && (
     <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2">
       <div className="border-2 border-[#CC4C19] p-2 flex items-center">
-        {!isMobile && <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>}
+        {!localIsMobile && <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>}
         <div className="flex-grow overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
@@ -132,7 +150,7 @@ export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackU
             </a>
           </div>
         </div>
-        {!isMobile && (
+        {!localIsMobile && (
           <div className="text-xl whitespace-nowrap pl-4">
             <a href="https://utility.materials.nyc">Utility Materials Inc.</a>
           </div>
@@ -198,3 +216,9 @@ export function OrangeSlider({ value, onChange, min = 0, max = 100 }) {
     </div>
   );
 }
+
+export default {
+  RetroWindow,
+  NowPlayingOverlay,
+  OrangeSlider
+};
