@@ -63,6 +63,22 @@ function LogoutWindow({ onLogout, position, onPositionChange }) {
   );
 }
 
+function AlbumArtWindow({ albumArt, position, onPositionChange }) {
+  return (
+    <RetroWindow title="Now Playing" position={position} onPositionChange={onPositionChange}>
+      <div className="flex flex-col items-center" style={{ width: '200px', height: '200px' }}>
+        {albumArt ? (
+          <img src={albumArt} alt="Album Art" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+            No Album Art
+          </div>
+        )}
+      </div>
+    </RetroWindow>
+  );
+}
+
 function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout }) {
   console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
 
@@ -74,7 +90,10 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
     logout: { x: 20, y: window.innerHeight - 160 },
+    albumArt: { x: 20, y: 80 }, // New position for album art window
   });
+
+  const [currentAlbumArt, setCurrentAlbumArt] = useState(null);
 
   useEffect(() => {
     const updateTempo = () => {
@@ -91,6 +110,25 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     const intervalId = setInterval(updateTempo, 1000);
 
     return () => clearInterval(intervalId);
+  }, [playerControls]);
+
+  useEffect(() => {
+    const updateCurrentTrack = async () => {
+      if (playerControls && playerControls.getCurrentTrack) {
+        const track = await playerControls.getCurrentTrack();
+        if (track && track.album && track.album.images && track.album.images.length > 0) {
+          setCurrentAlbumArt(track.album.images[0].url);
+        } else {
+          setCurrentAlbumArt(null);
+        }
+      }
+    };
+
+    updateCurrentTrack();
+    // Update every 5 seconds
+    const interval = setInterval(updateCurrentTrack, 5000);
+
+    return () => clearInterval(interval);
   }, [playerControls]);
 
   const handleVolumeChange = useCallback((newVolume) => {
@@ -152,6 +190,11 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
             onLogout={onLogout}
             position={windowPositions.logout}
             onPositionChange={(newPos) => updateWindowPosition('logout', newPos)}
+          />
+          <AlbumArtWindow 
+            albumArt={currentAlbumArt}
+            position={windowPositions.albumArt}
+            onPositionChange={(newPos) => updateWindowPosition('albumArt', newPos)}
           />
         </div>
       </div>

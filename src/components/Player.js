@@ -222,12 +222,26 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
       }
     },
     getTempo: () => tempo,
+    getCurrentTrack: async () => {
+      if (globalPlayer) {
+        const state = await globalPlayer.getCurrentState();
+        return state?.track_window?.current_track;
+      }
+      return null;
+    },
   });
 
   useEffect(() => {
     if (isReady && globalPlayer) {
       console.log("Player ready, setting controls");
-      setPlayerControls(playerControlsRef.current);
+      setPlayerControls({
+        togglePlay: playerControlsRef.current.togglePlay,
+        nextTrack: playerControlsRef.current.nextTrack,
+        previousTrack: playerControlsRef.current.previousTrack,
+        setVolume: playerControlsRef.current.setVolume,
+        getTempo: playerControlsRef.current.getTempo,
+        getCurrentTrack: playerControlsRef.current.getCurrentTrack,
+      });
     }
   }, [isReady, setPlayerControls]);
 

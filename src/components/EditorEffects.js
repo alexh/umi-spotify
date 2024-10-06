@@ -26,13 +26,6 @@ const EditorEffects = ({ children }) => {
         transition: 'transform 15s ease-in-out',
       },
     },
-    flipbook: {
-      name: 'Flipbook',
-      style: {
-        animation: 'flipBook 1s infinite linear',
-        transformStyle: 'preserve-3d',
-      },
-    },
     glitch: {
       name: 'Glitch',
       style: {
