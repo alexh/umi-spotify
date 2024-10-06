@@ -40,7 +40,7 @@ const Login = () => {
         </div>
         <button 
           onClick={handleLogin} 
-          className="bg-pantone-165 text-pantone-165-darker px-6 py-3 rounded text-lg transition-all duration-300 ease-in-out hover:bg-pantone-165-darker hover:text-pantone-165 transform hover:scale-105 border-2 border-pantone-165 hover:border-pantone-165-darker w-full retro-shadow"
+          className="bg-pantone-165 text-pantone-165-darker px-6 py-3 rounded text-lg transition-colors duration-300 hover:bg-pantone-165-darker hover:text-pantone-165 w-full retro-shadow"
           disabled={currentStep !== steps.length - 1}
         >
           LOGIN

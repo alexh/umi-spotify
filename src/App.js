@@ -118,11 +118,11 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
         <div className="relative z-10 flex flex-col items-center justify-center">
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
           <button 
-            className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300 relative"
+            className="bg-pantone-165 text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-200 relative"
             onClick={handleStart}
           >
             <span className="relative z-10">Click to Start</span>
-            <div className="absolute inset-0 bg-[#FF5F00] rounded-lg shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] -m-1"></div>
+            <div className="absolute inset-0 rounded-lg shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] bg-pantone-165 hover:bg-pantone-165-darker transition-colors duration-200  -m-1"></div>
           </button>
         </div>
         <MatrixRain />
@@ -131,8 +131,8 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   );
 }
 
-function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout }) {
-  console.log('AppContent rendering', { token, isPlaying, currentSong, currentArtist, playerControls });
+function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
+  console.log('AppContent rendering', { token, isPlaying, currentSong, currentArtist, playerControls, isIntro });
 
   return (
     <Routes>
@@ -157,6 +157,7 @@ function AppContent({ token, isPlaying, currentSong, currentArtist, playerContro
           currentArtist={currentArtist}
           playerControls={playerControls}
           onLogout={onLogout}
+          isIntro={isIntro}
         />
       } />
       <Route path="*" element={<Navigate to="/visualizer" replace />} />
@@ -177,6 +178,7 @@ function App() {
     previousTrack: () => console.log("Previous track not yet initialized")
   });
   const playerControlsRef = useRef(playerControls);
+  const [isIntro, setIsIntro] = useState(true);
 
   const handleLogout = useCallback(() => {
     console.log("Logging out");
@@ -191,11 +193,15 @@ function App() {
 
   const handleMusicStart = useCallback(() => {
     console.log("Music start triggered");
-    if (playerControlsRef.current && playerControlsRef.current.togglePlay) {
-      playerControlsRef.current.togglePlay();
-    } else {
-      console.error("Player controls not available for music start");
-    }
+    // if (playerControlsRef.current && playerControlsRef.current.togglePlay) {
+    //   playerControlsRef.current.togglePlay();
+    // } else {
+    //   console.error("Player controls not available for music start");
+    // }
+    // // Set a timeout to end the intro after the video has played twice (assuming the video is about 15 seconds long)
+    setTimeout(() => {
+      setIsIntro(false);
+    }, 2000); // 30 seconds for two loops
   }, []);
 
   const handlePlaybackStateChange = useCallback((state) => {
@@ -292,6 +298,7 @@ function App() {
           currentArtist={currentArtist}
           playerControls={playerControls}
           onLogout={handleLogout}
+          isIntro={isIntro}
         />
         <Player
           token={token}

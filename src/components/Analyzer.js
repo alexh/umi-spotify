@@ -14,8 +14,6 @@ class Analyzer {
       return;
     }
 
-    console.log("Initializing analyzer");
-
     this.analyser = audioContext.createAnalyser();
     this.analyser.fftSize = 2048;
     const bufferLength = this.analyser.frequencyBinCount;

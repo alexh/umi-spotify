@@ -63,11 +63,19 @@ function LogoutWindow({ onLogout, position, onPositionChange }) {
   );
 }
 
-function AlbumArtWindow({ albumArt, position, onPositionChange }) {
+function AlbumArtWindow({ albumArt, isIntro, position, onPositionChange }) {
   return (
     <RetroWindow title="Now Playing" position={position} onPositionChange={onPositionChange}>
       <div className="flex flex-col items-center" style={{ width: '200px', height: '200px' }}>
-        {albumArt ? (
+        {isIntro ? (
+          <video
+            src="/Cog.mp4"
+            autoPlay
+            muted
+            loop
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : albumArt ? (
           <img src={albumArt} alt="Album Art" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
@@ -120,7 +128,7 @@ function AudioAnalysisWindow({ audioData, position, onPositionChange }) {
   );
 }
 
-function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout }) {
+function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
   console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
 
   const [tempo, setTempo] = useState(null);
@@ -225,6 +233,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
       <AlbumArtWindow 
         key="albumArt"
         albumArt={currentAlbumArt}
+        isIntro={isIntro}
         position={windowPositions.albumArt}
         onPositionChange={(newPos) => updateWindowPosition('albumArt', newPos)}
       />,
