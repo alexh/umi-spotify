@@ -172,7 +172,7 @@ const pixelationShader = {
   `
 };
 
-function create3DText(scene, camera) {
+function create3DText(scene, camera, updateScore) {
   const textMaterial = new THREE.ShaderMaterial({
     uniforms: {
       color: { value: new THREE.Color(0xCC4C19) }, // Darker orange
@@ -283,13 +283,13 @@ function create3DText(scene, camera) {
       console.log('Text dimensions:', { width: textWidth, height: textHeight });
 
       function animateText() {
-        if (!textMesh) return;  // Add this check
+        if (!textMesh) return;
 
         textMesh.position.x += speed.x;
         textMesh.position.y += speed.y;
 
         // Update the time uniform for pulsing effect
-        textMaterial.uniforms.time.value += 0.016; // Assuming 60fps, adjust as needed
+        textMaterial.uniforms.time.value += 0.016;
 
         const leftBound = -width / 2 + textWidth / 2 + boundaryPadding;
         const rightBound = width / 2 - textWidth / 2 - boundaryPadding;
@@ -298,17 +298,23 @@ function create3DText(scene, camera) {
 
         let hitCorner = false;
 
+        // Increase the threshold for corner detection
+        const cornerThreshold = 0.2; // Increased from 0.1 to 0.2
+
         if (textMesh.position.x <= leftBound || textMesh.position.x >= rightBound) {
           speed.x *= -1;
           textMesh.position.x = Math.max(leftBound, Math.min(rightBound, textMesh.position.x));
           console.log('Horizontal bounce at:', textMesh.position.x);
-          hitCorner = Math.abs(textMesh.position.y - topBound) < 0.1 || Math.abs(textMesh.position.y - bottomBound) < 0.1;
+          hitCorner = Math.abs(textMesh.position.y - topBound) < cornerThreshold || 
+                      Math.abs(textMesh.position.y - bottomBound) < cornerThreshold;
         }
         if (textMesh.position.y <= bottomBound || textMesh.position.y >= topBound) {
           speed.y *= -1;
           textMesh.position.y = Math.max(bottomBound, Math.min(topBound, textMesh.position.y));
           console.log('Vertical bounce at:', textMesh.position.y);
-          hitCorner = hitCorner || Math.abs(textMesh.position.x - leftBound) < 0.1 || Math.abs(textMesh.position.x - rightBound) < 0.1;
+          hitCorner = hitCorner || 
+                      Math.abs(textMesh.position.x - leftBound) < cornerThreshold || 
+                      Math.abs(textMesh.position.x - rightBound) < cornerThreshold;
         }
 
         // Enforce max speed after bounces
@@ -319,6 +325,9 @@ function create3DText(scene, camera) {
         if (hitCorner) {
           cornerHits++;
           console.log(`Corner hit! Total hits: ${cornerHits}`);
+          
+          // Update the score
+          updateScore(cornerHits * 100);
           
           // Create and animate +100 text
           const plusGeometry = new TextGeometry('+100', {
@@ -362,7 +371,7 @@ function create3DText(scene, camera) {
   scheduleNextUpdate();
 }
 
-function Visualizer({ isPlaying, volume, audioAnalysis }) {
+function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
   const mountRef = useRef(null);
   const gearSceneRef = useRef(null);
   const textSceneRef = useRef(null);
@@ -524,7 +533,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis }) {
       pixelPass.uniforms["resolution"].value.set(newWidth, newHeight);
       // Update other necessary components
       if (font && textSceneRef.current && camera) {
-        create3DText(textSceneRef.current, camera);
+        create3DText(textSceneRef.current, camera, updateScore);
       }
     };
 

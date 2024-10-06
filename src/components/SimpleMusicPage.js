@@ -110,14 +110,22 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
 
   // Add a function to update the score
   const updateScore = useCallback((newScore) => {
-    setScore(newScore);
+    setScore(prevScore => {
+      console.log(`Updating score from ${prevScore} to ${newScore}`);
+      return newScore;
+    });
   }, []);
 
   return (
     <CRTEffect isPlaying={isPlaying} tempo={tempo}>
       <div className="relative w-full h-full">
         <div className="absolute inset-0 z-10">
-          <Visualizer isPlaying={isPlaying} updateScore={updateScore} />
+          <Visualizer 
+            isPlaying={isPlaying} 
+            updateScore={updateScore}
+            volume={volume}
+            audioAnalysis={null} // Add this prop if needed
+          />
         </div>
         
         <div className="relative z-20 w-full h-full">
