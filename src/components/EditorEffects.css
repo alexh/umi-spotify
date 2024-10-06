@@ -19,19 +19,13 @@
 }
 
 .editor-effect.bradybunch {
-  position: relative;
   overflow: hidden;
 }
 
-.brady-bunch-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: repeating-linear-gradient(to right, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 33.33%),
-                    repeating-linear-gradient(to bottom, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 33.33%);
-  pointer-events: none;
+.brady-bunch-cell {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .editor-effect.zoom {

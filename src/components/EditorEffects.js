@@ -77,16 +77,21 @@ const EditorEffects = ({ children }) => {
 
   if (!currentEffect || currentEffect.name === 'None') return children;
 
+  if (currentEffect.name === 'Brady Bunch') {
+    return (
+      <div style={currentEffect.style} className={`editor-effect ${currentEffect.name.toLowerCase()}`}>
+        {[...Array(9)].map((_, index) => (
+          <div key={index} className="brady-bunch-cell">
+            {React.cloneElement(children)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div style={currentEffect.style} className={`editor-effect ${currentEffect.name.toLowerCase()}`}>
-      {currentEffect.name === 'Brady Bunch' ? (
-        <>
-          {children}
-          <div className="brady-bunch-overlay"></div>
-        </>
-      ) : (
-        children
-      )}
+      {children}
     </div>
   );
 };
