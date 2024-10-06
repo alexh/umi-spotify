@@ -169,13 +169,13 @@ function App() {
   const [currentSong, setCurrentSong] = useState("");
   const [currentArtist, setCurrentArtist] = useState("");
   const [token, setToken] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [playerControls, setPlayerControls] = useState({
     togglePlay: () => console.log("Toggle play not yet initialized"),
     nextTrack: () => console.log("Next track not yet initialized"),
     previousTrack: () => console.log("Previous track not yet initialized")
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitializing, setIsInitializing] = useState(true);
   const playerControlsRef = useRef(playerControls);
 
   const handleLogout = useCallback(() => {
@@ -192,6 +192,18 @@ function App() {
   const handleMusicStart = useCallback(() => {
     // No idea what is actually triggering the music start
     // but its not here! lol
+  }, []);
+
+  const handlePlaybackStateChange = useCallback((state) => {
+    console.log("Playback state changed in App:", state);
+    setIsPlaying(state.isPlaying);
+    setCurrentSong(state.track?.name || "No track playing");
+    setCurrentArtist(state.track?.artists?.map(artist => artist.name).join(', ') || "Unknown Artist");
+  }, []);
+
+  const setPlayerControlsMemoized = useCallback((controls) => {
+    setPlayerControls(controls);
+    playerControlsRef.current = controls;
   }, []);
 
   useEffect(() => {
@@ -245,13 +257,6 @@ function App() {
     playerControlsRef.current = playerControls;
   }, [playerControls]);
 
-  const handlePlaybackStateChange = useCallback((state) => {
-    console.log("Playback state changed in App:", state);
-    setIsPlaying(state.isPlaying);
-    setCurrentSong(state.track?.name || "No track playing");
-    setCurrentArtist(state.track?.artists?.map(artist => artist.name).join(', ') || "Unknown Artist");
-  }, []);
-
   useEffect(() => {
     console.log("App render - Token:", token, "IsLoading:", isLoading, "IsInitializing:", isInitializing);
   }, [token, isLoading, isInitializing]);
@@ -284,13 +289,9 @@ function App() {
         />
         <Player
           token={token}
-          // playlist={playlist}
           isPlaying={isPlaying}
           onPlaybackStateChange={handlePlaybackStateChange}
-          setPlayerControls={(controls) => {
-            setPlayerControls(controls);
-            playerControlsRef.current = controls;
-          }}
+          setPlayerControls={setPlayerControlsMemoized}
         />
       </div>
     </Router>

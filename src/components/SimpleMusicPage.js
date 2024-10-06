@@ -244,11 +244,13 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         position={windowPositions.merch}
         onPositionChange={(newPos) => updateWindowPosition('merch', newPos)}
       />,
-      <ViewSwitcher 
-        key="switcher"
+      !isMobile && (
+        <ViewSwitcher 
+          key="switcher"
         position={windowPositions.switcher}
         onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
-      />,
+        />
+      ),
       <LogoutWindow 
         key="logout"
         onLogout={onLogout}
