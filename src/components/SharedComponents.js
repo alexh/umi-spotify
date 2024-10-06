@@ -97,37 +97,37 @@ export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackU
         <div className="flex-grow overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
               <span className="mr-8 animate-color-shift">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
               <span className="mr-8 animate-color-shift">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
               <span className="mr-8 animate-color-shift">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 m-2 spotify-logo-filter animate-pulse" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
               <span className="mr-8 animate-color-shift">{marqueeText}</span>
             </a>
           </div>
           <div className="inline-block animate-marquee" aria-hidden="true">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
               <span className="mr-8">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
               <span className="mr-8">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
               <span className="mr-8">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2" />
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
               <span className="mr-8">{marqueeText}</span>
             </a>
           </div>
