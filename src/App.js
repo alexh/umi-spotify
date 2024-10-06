@@ -84,12 +84,12 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
           <pre className="text-pantone-165-darker text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
             {`
-      ___   __    _   _____ _              ____            
-    / _ \\ / /_  / | |_   _| |__   ___    / ___|___   __ _ 
-   | (_) || '_ \\ | |   | | | '_ \\ /  _ \\ | |   / _ \\ / _\` |
-    \\__, | (_) || |   | | | | | |  __/  | |__| (_) | (_| |
-      /_/  \\___(_) _|  |_| |_| |_|\\___|   \\____\\___/ \\__, |
-                                                      |___/ 
+         ___   __    _   _____ _             ____            
+        / _ \\ / /_  / | |_   _| |__   ___   / ___|___   __ _ 
+        | (_) | '_ \\ | |   | | | '_ \\ / _ \\ | |   / _ \\ / _\` |
+        \\__, | (_) || |   | | | | | |  __/ | |__| (_) | (_| |
+           /_/ \\___(_)_|   |_| |_| |_|\\___|  \\____\\___/ \\__, |
+                                                        |___/ 
           `}
           </pre>
           <div className="text-pantone-165-darker font-receipt text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>

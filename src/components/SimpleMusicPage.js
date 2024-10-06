@@ -3,6 +3,7 @@ import { RetroWindow, NowPlayingOverlay, OrangeSlider } from './SharedComponents
 import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
+import EditorEffects from './EditorEffects';
 
 function MerchWindow({ position, onPositionChange }) {
   return (
@@ -72,7 +73,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
     merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
-    logout: { x: 20, y: window.innerHeight - 100 },
+    logout: { x: 20, y: window.innerHeight - 160 },
   });
 
   useEffect(() => {
@@ -117,12 +118,14 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     <CRTEffect isPlaying={isPlaying} tempo={tempo}>
       <div className="relative w-full h-full">
         <div className="absolute inset-0 z-10">
-          <Visualizer 
-            isPlaying={isPlaying} 
-            updateScore={updateScore}
-            volume={volume}
-            audioAnalysis={null} // Add this prop if needed
-          />
+          <EditorEffects>
+            <Visualizer 
+              isPlaying={isPlaying} 
+              updateScore={updateScore}
+              volume={volume}
+              audioAnalysis={null} // Add this prop if needed
+            />
+          </EditorEffects>
         </div>
         
         <div className="relative z-20 w-full h-full">

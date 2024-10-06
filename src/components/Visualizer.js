@@ -394,8 +394,8 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
   }, [isPlaying]);
 
   useEffect(() => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = mountRef.current.clientWidth;
+    const height = mountRef.current.clientHeight;
 
     // Scene setup
     const scene = new THREE.Scene();
@@ -524,8 +524,8 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
 
     // Handle resize
     const handleResize = () => {
-      const newWidth = window.innerWidth;
-      const newHeight = window.innerHeight;
+      const newWidth = mountRef.current.clientWidth;
+      const newHeight = mountRef.current.clientHeight;
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
@@ -576,7 +576,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
 
   console.log("Visualizer render", { isPlaying, volume, hasAudioAnalysis: !!audioAnalysis });
 
-  return <div ref={mountRef} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />;
+  return <div ref={mountRef} style={{ width: '100%', height: '100%' }} />;
 }
 
 export default React.memo(Visualizer);
