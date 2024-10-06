@@ -299,7 +299,7 @@ function create3DText(scene, camera, updateScore) {
         let hitCorner = false;
 
         // Increase the threshold for corner detection
-        const cornerThreshold = 0.2; // Increased from 0.1 to 0.2
+        const cornerThreshold = 0.1; // Increased from 0.1 to 0.2
 
         if (textMesh.position.x <= leftBound || textMesh.position.x >= rightBound) {
           speed.x *= -1;
@@ -476,7 +476,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
 
     // Load font for 3D text
     const fontLoader = new FontLoader();
-    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
+    fontLoader.load('/Receipt_Narrow_Regular.json', (loadedFont) => {
       setFont(loadedFont);
     });
 
@@ -566,13 +566,13 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
         gearComposer.dispose();
       }
     };
-  }, [audioAnalysis, isPlaying]);
+  }, [audioAnalysis, isPlaying, updateScore]);
 
   useEffect(() => {
     if (font && textSceneRef.current && cameraRef.current) {
-      create3DText(textSceneRef.current, cameraRef.current);
+      create3DText(textSceneRef.current, cameraRef.current, updateScore);
     }
-  }, [font]);
+  }, [font, updateScore]);
 
   console.log("Visualizer render", { isPlaying, volume, hasAudioAnalysis: !!audioAnalysis });
 

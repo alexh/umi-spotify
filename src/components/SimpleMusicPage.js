@@ -63,18 +63,16 @@ function LogoutWindow({ onLogout, position, onPositionChange }) {
 }
 
 function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout }) {
-  useEffect(() => {
-    console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
-  }, [isPlaying, currentSong, currentArtist, playerControls]);
+  console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
 
   const [tempo, setTempo] = useState(null);
   const [volume, setVolume] = useState(50);
-  const [score, setScore] = useState(0); // Add score state
+  const [score, setScore] = useState(0);
   const [windowPositions, setWindowPositions] = useState({
     music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
     merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
-    logout: { x: 30, y: window.innerHeight - 160 }, // Position for the logout window
+    logout: { x: 20, y: window.innerHeight - 100 },
   });
 
   useEffect(() => {
@@ -108,7 +106,6 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     }));
   };
 
-  // Add a function to update the score
   const updateScore = useCallback((newScore) => {
     setScore(prevScore => {
       console.log(`Updating score from ${prevScore} to ${newScore}`);
