@@ -1,0 +1,28 @@
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+
+.retro-shadow {
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.retro-box {
+  box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.3);
+}
+
+.ascii-art {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .ascii-art {
+    font-size: 12px;
+  }
+}
