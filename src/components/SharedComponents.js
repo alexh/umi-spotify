@@ -94,7 +94,7 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackUrl }) {
+export function NowPlayingOverlay({ currentSong, artist, score, trackUrl }) {
   const [localIsMobile, setLocalIsMobile] = useState(isMobileDevice());
 
   useEffect(() => {

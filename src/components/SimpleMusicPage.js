@@ -99,47 +99,6 @@ function AlbumArtWindow({ albumArt, isIntro, position, onPositionChange, trackUr
   );
 }
 
-function BarGraph({ data }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    if (!data || data.length === 0) return;
-
-    const barWidth = width / data.length;
-    const maxValue = Math.max(...data);
-
-    ctx.fillStyle = '#FF5F00';
-    data.forEach((value, index) => {
-      const barHeight = (value / maxValue) * height;
-      ctx.fillRect(index * barWidth, height - barHeight, barWidth - 1, barHeight);
-    });
-  }, [data]);
-
-  return <canvas ref={canvasRef} width="180" height="100" />;
-}
-
-function AudioAnalysisWindow({ audioData, position, onPositionChange }) {
-  return (
-    <RetroWindow title="Audio Analysis" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center" style={{ width: '200px', height: '150px' }}>
-        <BarGraph data={audioData.frequencyData} />
-        <div className="mt-2 text-xs">
-          <p>Avg: {audioData.averageFrequency?.toFixed(2)}</p>
-          <p>Bass: {audioData.bassFrequency?.toFixed(2)}</p>
-          <p>Treble: {audioData.trebleFrequency?.toFixed(2)}</p>
-        </div>
-      </div>
-    </RetroWindow>
-  );
-}
-
 function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
   console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
 
@@ -156,11 +115,9 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   });
 
   const [currentAlbumArt, setCurrentAlbumArt] = useState(null);
-  const [audioData, setAudioData] = useState({ averageFrequency: 0, bassFrequency: 0, trebleFrequency: 0, frequencyData: [] });
 
   const updateTempoRef = useRef(null);
   const updateCurrentTrackRef = useRef(null);
-  const updateAudioDataRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(isMobileDevice());
   const [currentTrackUrl, setCurrentTrackUrl] = useState(null);
@@ -195,22 +152,8 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
       }
     };
 
-    updateAudioDataRef.current = () => {
-      if (playerControls && playerControls.getAudioData) {
-        const newAudioData = playerControls.getAudioData();
-        if (newAudioData) {
-          setAudioData(prevData => ({
-            ...prevData,
-            ...newAudioData,
-            frequencyData: newAudioData.frequencyData || prevData.frequencyData,
-          }));
-        }
-      }
-    };
-
     const tempoInterval = setInterval(() => updateTempoRef.current(), 1000);
     const trackInterval = setInterval(() => updateCurrentTrackRef.current(), 5000);
-    const audioDataInterval = setInterval(() => updateAudioDataRef.current(), 100);
 
     // Initial update
     updateCurrentTrackRef.current();
@@ -218,7 +161,6 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     return () => {
       clearInterval(tempoInterval);
       clearInterval(trackInterval);
-      clearInterval(audioDataInterval);
     };
   }, [playerControls]);
 
@@ -282,12 +224,6 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         position={windowPositions.logout}
         onPositionChange={(newPos) => updateWindowPosition('logout', newPos)}
       />,
-      // <AudioAnalysisWindow 
-      //   key="audioAnalysis"
-      //   audioData={audioData}
-      //   position={windowPositions.audioAnalysis}
-      //   onPositionChange={(newPos) => updateWindowPosition('audioAnalysis', newPos)}
-      // />
     ];
 
     if (isMobile) {
