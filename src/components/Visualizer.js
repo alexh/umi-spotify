@@ -371,7 +371,7 @@ function create3DText(scene, camera, updateScore) {
   scheduleNextUpdate();
 }
 
-function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
+function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile }) {
   const mountRef = useRef(null);
   const gearSceneRef = useRef(null);
   const textSceneRef = useRef(null);
@@ -474,11 +474,13 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
     pixelPass.uniforms["pixelSize"].value = 1;
     gearComposer.addPass(pixelPass);
 
-    // Load font for 3D text
-    const fontLoader = new FontLoader();
-    fontLoader.load('/Receipt_Narrow_Regular.json', (loadedFont) => {
-      setFont(loadedFont);
-    });
+    if (!isMobile) {
+      // Load font for 3D text only on non-mobile devices
+      const fontLoader = new FontLoader();
+      fontLoader.load('/Receipt_Narrow_Regular.json', (loadedFont) => {
+        setFont(loadedFont);
+      });
+    }
 
     // Animation
     const animate = () => {
@@ -566,13 +568,13 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore }) {
         gearComposer.dispose();
       }
     };
-  }, [audioAnalysis, isPlaying, updateScore]);
+  }, [audioAnalysis, isPlaying, updateScore, isMobile]);
 
   useEffect(() => {
-    if (font && textSceneRef.current && cameraRef.current) {
+    if (!isMobile && font && textSceneRef.current && cameraRef.current) {
       create3DText(textSceneRef.current, cameraRef.current, updateScore);
     }
-  }, [font, updateScore]);
+  }, [font, updateScore, isMobile]);
 
   console.log("Visualizer render", { isPlaying, volume, hasAudioAnalysis: !!audioAnalysis });
 

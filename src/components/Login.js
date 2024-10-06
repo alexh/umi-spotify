@@ -28,9 +28,9 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-pantone-165 text-pantone-165-darker font-receipt">
-      <div className="text-center bg-pantone-165-darker border-4 border-pantone-165 p-8 rounded-lg shadow-lg max-w-md w-full mx-4 retro-box min-w-[500px]">
-        <h1 className="text-6xl font-nickel mb-8 text-pantone-165">96.1 The Cog</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-pantone-165 text-pantone-165-darker font-receipt p-4 overflow-auto">
+      <div className="text-center bg-pantone-165-darker border-4 border-pantone-165 p-4 sm:p-8 rounded-lg shadow-lg mx-auto w-full max-w-md retro-box">
+        <h1 className="text-4xl sm:text-6xl font-nickel mb-4 sm:mb-8 text-pantone-165">96.1 The Cog</h1>
         <div className="bg-pantone-165 text-pantone-165-darker p-2 mb-4 rounded text-left">
           {steps.map((step, index) => (
             <p key={index} className={`mb-2 ${index <= currentStep ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}>

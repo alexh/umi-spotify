@@ -5,6 +5,7 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   const [localPosition, setLocalPosition] = useState(position);
   const dragStartRef = useRef(null);
   const windowRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -47,46 +48,62 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
     setLocalPosition(position);
   }, [position]);
 
-  return (
-    <div 
-      ref={windowRef}
-      className="absolute bg-[#FF5F00] border-2 border-[#CC4C19] rounded-none shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] p-0.5 font-receipt text-black"
-      style={{
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const windowStyle = isMobile
+    ? { width: '100%', maxWidth: '300px' }
+    : {
+        position: 'absolute',
         left: `${localPosition.x}px`,
         top: `${localPosition.y}px`,
         cursor: isDragging ? 'grabbing' : 'grab',
-        maxWidth: '300px', // Ensure it doesn't exceed this width
-      }}
+        maxWidth: '300px',
+      };
+
+  return (
+    <div 
+      ref={windowRef}
+      className={`bg-[#FF5F00] border-2 border-[#CC4C19] rounded-none shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] p-0.5 font-receipt text-black ${isMobile ? 'w-full' : ''}`}
+      style={windowStyle}
     >
       <div 
         className="bg-[#CC4C19] p-1 mb-1.5 font-bold flex justify-between items-center"
-        onMouseDown={handleMouseDown}
-        style={{ cursor: 'grab' }}
+        onMouseDown={!isMobile ? handleMouseDown : undefined}
+        style={{ cursor: isMobile ? 'default' : 'grab' }}
       >
         <span>{title}</span>
       </div>
-      <div className="p-2" style={{ cursor: 'default', overflowX: 'hidden' }}>
+      <div className="p-2 flex justify-center" style={{ cursor: 'default', overflowX: 'hidden' }}>
         {children}
       </div>
     </div>
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist, score }) {
-  const marqueeText = `${currentSong} by ${artist} • `.repeat(10); // Repeat the text to ensure it's long enough
+export function NowPlayingOverlay({ currentSong, artist, score, isMobile }) {
+  const marqueeText = `${currentSong} by ${artist} • `.repeat(10);
 
   return currentSong && (
     <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2">
       <div className="border-2 border-[#CC4C19] p-2 flex items-center">
-        <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>
+        {!isMobile && <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>}
         <div className="flex-grow overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
             <span className="inline-block px-4">{marqueeText}</span>
           </div>
         </div>
-        <div className="text-xl whitespace-nowrap pl-4">
-          <a href="https://utility.materials.nyc">Utility Materials Inc.</a>
-        </div>
+        {!isMobile && (
+          <div className="text-xl whitespace-nowrap pl-4">
+            <a href="https://utility.materials.nyc">Utility Materials Inc.</a>
+          </div>
+        )}
       </div>
     </div>
   );

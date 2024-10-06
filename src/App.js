@@ -11,6 +11,7 @@ import { getAccessToken, getUserProfile } from './spotifyApi';
 function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   const [loadingStep, setLoadingStep] = useState(0);
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const loadingSteps = [
     "Initializing system...",
     "Loading core components...",
@@ -35,7 +36,16 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   ];
 
   useEffect(() => {
-    const totalDuration = 4000; // 6 seconds in milliseconds
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const totalDuration = 4000; // 4 seconds in milliseconds
     const stepDuration = totalDuration / loadingSteps.length;
     let timer;
 
@@ -82,16 +92,18 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
       <CRTEffect>
         <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
-          <pre className="text-pantone-165-darker text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
-            {`
+          {!isMobile && (
+            <pre className="text-pantone-165-darker text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
+              {`
          ___   __    _   _____ _             ____            
         / _ \\ / /_  / | |_   _| |__   ___   / ___|___   __ _ 
         | (_) | '_ \\ | |   | | | '_ \\ / _ \\ | |   / _ \\ / _\` |
         \\__, | (_) || |   | | | | | |  __/ | |__| (_) | (_| |
            /_/ \\___(_)_|   |_| |_| |_|\\___|  \\____\\___/ \\__, |
                                                         |___/ 
-          `}
-          </pre>
+              `}
+            </pre>
+          )}
           <div className="text-pantone-165-darker font-receipt text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>
           <div className="text-pantone-165-darker font-receipt text-xl mb-4">{Math.round(((loadingStep + 1) / loadingSteps.length) * 100)}%</div>
           <div className="text-pantone-165-darker font-receipt text-lg">{loadingSteps[loadingStep]}</div>
@@ -106,10 +118,11 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
         <div className="relative z-10 flex flex-col items-center justify-center">
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
           <button 
-            className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
+            className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300 relative"
             onClick={handleStart}
           >
-            Click to Start
+            <span className="relative z-10">Click to Start</span>
+            <div className="absolute inset-0 bg-[#FF5F00] rounded-lg shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] -m-1"></div>
           </button>
         </div>
         <MatrixRain />
