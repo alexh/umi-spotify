@@ -10,7 +10,6 @@ import { debounce } from 'lodash';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider } from './SharedComponents';
 import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
-import FOVSlider from './FOVSlider';
 
 class OrangeFilterEffect extends Effect {
   constructor({ intensity = 1.0 } = {}) {
@@ -365,7 +364,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   const [dustCount] = useState(1000);
   const [dustSpeed] = useState(5);
   const [volume, setVolume] = useState(50);  // Initial volume set to 50%
-  const [fov, setFOV] = useState(75); // Default FOV
+  const fov = 75;
 
   const [windowPositions, setWindowPositions] = useState({
     pixelation: { x: 20, y: 80 },

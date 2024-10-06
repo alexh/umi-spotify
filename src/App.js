@@ -106,7 +106,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
         <div className="relative z-10 flex flex-col items-center justify-center">
           <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">86.1 The Cog</div>
           <button 
-            className="bg-pantone-165-dark text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
+            className="bg-pantone-165-dark text-white text-shadow rounded-lg shadow-lg px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-300"
             onClick={handleStart}
           >
             Click to Start
