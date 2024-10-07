@@ -122,6 +122,10 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [isMobile, setIsMobile] = useState(isMobileDevice());
   const [currentTrackUrl, setCurrentTrackUrl] = useState(null);
 
+  const [showCoupon, setShowCoupon] = useState(false);
+  const konamiCode = useRef([]);
+  const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(isMobileDevice());
@@ -164,6 +168,23 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     };
   }, [playerControls]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      konamiCode.current.push(e.keyCode);
+      konamiCode.current = konamiCode.current.slice(-11);
+      
+      if (konamiCode.current.join(',') === konamiSequence.join(',')) {
+        setShowCoupon(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const handleVolumeChange = useCallback((newVolume) => {
     setVolume(newVolume);
     if (playerControls && typeof playerControls.setVolume === 'function') {
@@ -184,6 +205,26 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
       return newScore;
     });
   }, []);
+
+  const CouponPopup = () => (
+    <RetroWindow 
+      title="Secret Coupon" 
+      position={{ x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 100 }}
+      onPositionChange={() => {}}
+    >
+      <div className="p-4 text-center">
+        <h2 className="text-xl font-bold mb-4">Congratulations!</h2>
+        <p className="mb-4">You&apos;ve unlocked a secret coupon code:</p>
+        <p className="text-2xl font-bold mb-6 text-pantone-165-darker">COGMASTER2024</p>
+        <button 
+          onClick={() => setShowCoupon(false)}
+          className="bg-pantone-165-dark text-white px-4 py-2 rounded hover:bg-pantone-165-darker transition-colors duration-300"
+        >
+          Close
+        </button>
+      </div>
+    </RetroWindow>
+  );
 
   const renderWindows = () => {
     const windows = [
@@ -225,6 +266,10 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         onPositionChange={(newPos) => updateWindowPosition('logout', newPos)}
       />,
     ];
+
+    if (showCoupon) {
+      windows.push(<CouponPopup key="coupon" />);
+    }
 
     if (isMobile) {
       return (
