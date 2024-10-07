@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense, useContext } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Text, useGLTF, useKeyboardControls, KeyboardControls } from '@react-three/drei';
 import { EffectComposer, Bloom, Pixelation } from '@react-three/postprocessing';
@@ -9,34 +9,71 @@ import { Uniform } from 'three';
 import { debounce } from 'lodash';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow } from './SharedComponents';
 import CRTEffect from './CRTEffect';
-import ViewSwitcher from './ViewSwitcher';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls as OrbitControlsThree } from 'three/examples/jsm/controls/OrbitControls';
+import { themes, ThemeContext } from '../themes';
+import { useNavigate } from 'react-router-dom';
 
-class OrangeFilterEffect extends Effect {
-  constructor({ intensity = 1.0 } = {}) {
-    super('OrangeFilterEffect', `
+// Theme selector component
+function ThemeSelector({ position, onPositionChange }) {
+  const { theme, setTheme } = useContext(ThemeContext);
+
+  return (
+    <RetroWindow title="Theme Selector" position={position} onPositionChange={onPositionChange}>
+      <select 
+        value={theme} 
+        onChange={(e) => setTheme(e.target.value)}
+        style={{
+          backgroundColor: themes[theme].secondary,
+          color: themes[theme].text
+        }}
+        className="px-2 py-1 rounded w-full"
+      >
+        <option value="default">Default</option>
+        <option value="monochrome">Monochrome</option>
+        <option value="cute">Materials Girl</option>
+      </select>
+    </RetroWindow>
+  );
+}
+
+class ThemeFilterEffect extends Effect {
+  constructor({ intensity = 1.0, theme = 'default' } = {}) {
+    super('ThemeFilterEffect', `
       uniform float intensity;
+      uniform vec3 themeColor;
       
-      vec3 orangeRamp(vec3 color) {
+      vec3 themeRamp(vec3 color) {
         float luminance = dot(color, vec3(0.299, 0.587, 0.114));
-        vec3 darkOrange = vec3(0.5, 0.2, 0.0);
-        vec3 lightOrange = vec3(1.0, 0.6, 0.2);
-        return mix(darkOrange, lightOrange, luminance);
+        vec3 darkTheme = themeColor * 0.5;
+        vec3 lightTheme = themeColor + vec3(0.2);
+        return mix(darkTheme, lightTheme, luminance);
       }
 
       void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-        vec3 orangeColor = orangeRamp(inputColor.rgb);
-        outputColor = vec4(mix(inputColor.rgb, orangeColor, intensity), inputColor.a);
+        vec3 themeColor = themeRamp(inputColor.rgb);
+        outputColor = vec4(mix(inputColor.rgb, themeColor, intensity), inputColor.a);
       }
     `, {
-      uniforms: new Map([['intensity', new Uniform(intensity)]])
+      uniforms: new Map([
+        ['intensity', new Uniform(intensity)],
+        ['themeColor', new Uniform(new THREE.Color(themes[theme].primary))]
+      ])
     });
+  }
+
+  updateTheme(theme) {
+    this.uniforms.get('themeColor').value = new THREE.Color(themes[theme].primary);
   }
 }
 
-function OrangeFilter({ intensity = 1 }) {
-  const effect = new OrangeFilterEffect({ intensity });
+function ThemeFilter({ intensity = 1, theme }) {
+  const effect = useMemo(() => new ThemeFilterEffect({ intensity, theme }), [intensity, theme]);
+  
+  useEffect(() => {
+    effect.updateTheme(theme);
+  }, [effect, theme]);
+
   return <primitive object={effect} />;
 }
 
@@ -63,16 +100,14 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
   const modelRef = useRef();
   const [carTurnAngle, setCarTurnAngle] = useState(0);
   const targetTurnAngle = useRef(0);
+  const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
     if (scene) {
-      console.log("GLTF scene loaded, traversing children:");
+      console.log("Updating car model with theme:", theme);
       scene.traverse((child) => {
-        console.log("Child:", child.name, child.type);
         if (child.isMesh) {
-          console.log("Mesh found:", child.name);
           if (child.name === "Windshield" || child.name.toLowerCase().includes('glass')) {
-            console.log("Found windshield or glass:", child.name);
             child.material = new THREE.MeshPhysicalMaterial({
               transparent: true,
               opacity: 0.3,
@@ -82,11 +117,20 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
               metalness: 0.1,
               roughness: 0.1,
             });
+          } else {
+            // Update existing material or create a new one
+            if (!child.material.isMeshStandardMaterial) {
+              child.material = new THREE.MeshStandardMaterial();
+            }
+            child.material.color.set(themes[theme].primary);
+            child.material.metalness = 0.5;
+            child.material.roughness = 0.5;
+            child.material.needsUpdate = true;
           }
         }
       });
     }
-  }, [scene]);
+  }, [scene, theme]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -189,34 +233,23 @@ function CameraController({ zoom, fov, carTurnAngle, viewMode }) {
 }
 
 function ViewToggle({ viewMode, setViewMode, position, onPositionChange }) {
+  const { theme } = useContext(ThemeContext);
+  const toggleView = () => {
+    setViewMode(viewMode === 'firstPerson' ? 'thirdPerson' : 'firstPerson');
+  };
+
   return (
-    <RetroWindow title="Camera View Selector" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col space-y-2">
-        <label className="flex items-center cursor-pointer">
-          <input 
-            type="radio" 
-            className="hidden"
-            checked={viewMode === 'firstPerson'} 
-            onChange={() => setViewMode('firstPerson')}
-          />
-          <span className="relative w-4 h-4 mr-2 bg-[#FFD700] bg-opacity-30 rounded-sm">
-            <span className={`absolute inset-0 bg-[#FF4500] rounded-sm transform scale-0 transition-transform duration-200 ${viewMode === 'firstPerson' ? 'scale-100' : ''}`}></span>
-          </span>
-          First Person
-        </label>
-        <label className="flex items-center cursor-pointer">
-          <input 
-            type="radio" 
-            className="hidden"
-            checked={viewMode === 'thirdPerson'} 
-            onChange={() => setViewMode('thirdPerson')}
-          />
-          <span className="relative w-4 h-4 mr-2 bg-[#FFD700] bg-opacity-30 rounded-sm">
-            <span className={`absolute inset-0 bg-[#FF4500] rounded-sm transform scale-0 transition-transform duration-200 ${viewMode === 'thirdPerson' ? 'scale-100' : ''}`}></span>
-          </span>
-          Third Person
-        </label>
-      </div>
+    <RetroWindow title="Camera View" position={position} onPositionChange={onPositionChange}>
+      <button 
+        onClick={toggleView}
+        style={{
+          backgroundColor: themes[theme].secondary,
+          color: themes[theme].text
+        }}
+        className="px-4 py-2 rounded transition-colors duration-300 hover:opacity-80 w-full"
+      >
+        Switch to {viewMode === 'firstPerson' ? 'Third Person' : 'First Person'}
+      </button>
     </RetroWindow>
   );
 }
@@ -251,7 +284,7 @@ function RotatingSongText({ song, radius, height, scale }) {
   );
 }
 
-function Dust({ count, size, speed }) {
+function Dust({ count, size, speed, color }) {
   const meshRef = useRef();
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
@@ -289,21 +322,23 @@ function Dust({ count, size, speed }) {
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]}>
       <boxGeometry args={[size, size, size]} />
-      <meshBasicMaterial color="#CC4C19" transparent opacity={0.3} />
+      <meshBasicMaterial color={color} transparent opacity={0.3} />
     </instancedMesh>
   );
 }
 
 function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
+  const { theme } = useContext(ThemeContext);
+
   useEffect(() => {
     console.log("Scene rendered with dust parameters:", { dustSize, dustCount, dustSpeed });
   }, [dustSize, dustCount, dustSpeed]);
 
   return (
     <Suspense fallback={null}>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
-      <directionalLight position={[-5, 5, 5]} intensity={0.5} />
+      <ambientLight intensity={0.5} color={new THREE.Color(themes[theme].primary)} />
+      <directionalLight position={[5, 5, 5]} intensity={1} color={new THREE.Color(themes[theme].primary)} />
+      <directionalLight position={[-5, 5, 5]} intensity={0.5} color={new THREE.Color(themes[theme].secondary)} />
       {children}
       <RotatingSongText 
         song={currentSong} 
@@ -317,7 +352,7 @@ function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dust
         enablePan={false} 
         enableRotate={!isInteractingWithUI} 
       />
-      <Dust count={dustCount} size={dustSize} speed={dustSpeed} />
+      <Dust count={dustCount} size={dustSize} speed={dustSpeed} color={themes[theme].secondary} />
       <CarModel 
         token={token}
         currentSong={currentSong}
@@ -327,9 +362,9 @@ function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dust
         onPrevious={() => {}}
       />
       <EffectComposer>
-        <OrangeFilter intensity={0.8} />
+        <ThemeFilter intensity={0.8} theme={theme} />
         <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
-        <Pixelation granularity={pixelSize * 30} /> {/* Change PixelationEffect to Pixelation */}
+        <Pixelation granularity={pixelSize * 30} />
       </EffectComposer>
     </Suspense>
   );
@@ -473,6 +508,32 @@ function PixelationSlider({ pixelSize, setPixelSize, position, onPositionChange 
   );
 }
 
+function ViewSwitcher({ position, onPositionChange }) {
+  const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+
+  const handleViewSwitch = () => {
+    navigate('/visualizer');
+  };
+
+  return (
+    <RetroWindow title="View Switcher" position={position} onPositionChange={onPositionChange}>
+      <div className="flex flex-col items-center">
+        <button 
+          onClick={handleViewSwitch}
+          style={{
+            backgroundColor: themes[theme].secondary,
+            color: themes[theme].text
+          }}
+          className="px-4 py-2 rounded transition-colors duration-300 hover:opacity-80 w-full text-center"
+        >
+          Switch to Visualizer View
+        </button>
+      </div>
+    </RetroWindow>
+  );
+}
+
 export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, playerControls }) {
   const [viewMode, setViewMode] = useState('firstPerson');
   const [zoom, setZoom] = useState(0.47);
@@ -482,6 +543,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   const [dustSpeed] = useState(5);
   const [volume, setVolume] = useState(50);  // Initial volume set to 50%
   const fov = 75;
+  const [theme, setTheme] = useState('default');
 
   const [windowPositions, setWindowPositions] = useState({
     pixelation: { x: 20, y: 80 },
@@ -491,6 +553,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
     merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
     fov: { x: 20, y: window.innerHeight - 220 },
+    themeSelector: { x: 20, y: window.innerHeight - 280 },
   });
 
   const [isInteractingWithUI, setIsInteractingWithUI] = useState(false);
@@ -544,68 +607,74 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   }, []);
 
   return (
-    <CRTEffect isPlaying={isPlaying} tempo={tempo}>
-      <div className="relative w-screen h-screen">
-        <div className="absolute inset-0 z-10">
-          <Canvas>
-            <Suspense fallback={null}>
-              <CarView3D 
-                token={token}
-                currentSong={currentSong}
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <CRTEffect isPlaying={isPlaying} tempo={tempo}>
+        <div className="relative w-screen h-screen" style={{ backgroundColor: themes[theme].background }}>
+          <div className="absolute inset-0 z-10">
+            <Canvas>
+              <Suspense fallback={null}>
+                <CarView3D 
+                  token={token}
+                  currentSong={currentSong}
+                  isPlaying={isPlaying}
+                  onPlayPause={onPlayPause}
+                  onNext={onNext}
+                  onPrevious={onPrevious}
+                  viewMode={viewMode}
+                  zoom={zoom}
+                  pixelSize={pixelSize}
+                  dustSize={dustSize}
+                  dustCount={dustCount}
+                  dustSpeed={dustSpeed}
+                  isInteractingWithUI={isInteractingWithUI}
+                  fov={fov}
+                />
+              </Suspense>
+            </Canvas>
+          </div>
+          
+          <div className="absolute inset-0 z-20 pointer-events-none">
+            <NowPlayingOverlay currentSong={currentSong} artist={currentArtist} />
+            <div className="pointer-events-auto" onMouseEnter={handleMouseEnterUI} onMouseLeave={handleMouseLeaveUI}>
+              <PixelationSlider 
+                pixelSize={pixelSize} 
+                setPixelSize={setPixelSize} 
+                position={windowPositions.pixelation}
+                onPositionChange={(newPos) => updateWindowPosition('pixelation', newPos)}
+              />
+              <ViewToggle 
+                viewMode={viewMode} 
+                setViewMode={setViewMode} 
+                position={windowPositions.view}
+                onPositionChange={(newPos) => updateWindowPosition('view', newPos)}
+              />
+              <MusicControls 
                 isPlaying={isPlaying}
                 onPlayPause={onPlayPause}
                 onNext={onNext}
                 onPrevious={onPrevious}
-                viewMode={viewMode}
-                zoom={zoom}
-                pixelSize={pixelSize}
-                dustSize={dustSize}
-                dustCount={dustCount}
-                dustSpeed={dustSpeed}
-                isInteractingWithUI={isInteractingWithUI}
-                fov={fov}
+                volume={volume}
+                onVolumeChange={handleVolumeChange}
+                position={windowPositions.music}
+                onPositionChange={(newPos) => updateWindowPosition('music', newPos)}
               />
-            </Suspense>
-          </Canvas>
-        </div>
-        
-        <div className="absolute inset-0 z-20 pointer-events-none">
-          <NowPlayingOverlay currentSong={currentSong} artist={currentArtist} />
-          <div className="pointer-events-auto" onMouseEnter={handleMouseEnterUI} onMouseLeave={handleMouseLeaveUI}>
-            <PixelationSlider 
-              pixelSize={pixelSize} 
-              setPixelSize={setPixelSize} 
-              position={windowPositions.pixelation}
-              onPositionChange={(newPos) => updateWindowPosition('pixelation', newPos)}
-            />
-            <ViewToggle 
-              viewMode={viewMode} 
-              setViewMode={setViewMode} 
-              position={windowPositions.view}
-              onPositionChange={(newPos) => updateWindowPosition('view', newPos)}
-            />
-            <MusicControls 
-              isPlaying={isPlaying}
-              onPlayPause={onPlayPause}
-              onNext={onNext}
-              onPrevious={onPrevious}
-              volume={volume}
-              onVolumeChange={handleVolumeChange}
-              position={windowPositions.music}
-              onPositionChange={(newPos) => updateWindowPosition('music', newPos)}
-            />
-            <MerchWindow 
-              position={windowPositions.merch}
-              onPositionChange={(newPos) => updateWindowPosition('merch', newPos)}
-            />
-            <ViewSwitcher 
-              position={windowPositions.switcher}
-              onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
-            />
+              <MerchWindow 
+                position={windowPositions.merch}
+                onPositionChange={(newPos) => updateWindowPosition('merch', newPos)}
+              />
+              <ViewSwitcher 
+                position={windowPositions.switcher}
+                onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
+              />
+              <ThemeSelector 
+                position={windowPositions.themeSelector}
+                onPositionChange={(newPos) => updateWindowPosition('themeSelector', newPos)}
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </CRTEffect>
+      </CRTEffect>
+    </ThemeContext.Provider>
   );
 }
 

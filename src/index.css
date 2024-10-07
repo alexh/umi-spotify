@@ -2,14 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'receipt-narrow', 'Courier New', Courier, monospace;
-  color: #CC4C19;
-  background-color: #FF5F1F; /* Pantone 165 */
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+:root {
+  --theme-primary: #FF5F00;
+  --theme-secondary: #CC4C19;
+  --theme-text: #000000;
+  --theme-background: #FFD700;
 }
+
+/* Use the variables in your styles */
+body {
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+}
+
+/* Update the color-shift animation to use CSS variables */
+@keyframes color-shift {
+  0%, 100% { color: var(--theme-primary); }
+  50% { color: var(--theme-secondary); }
+}
+
+.animate-color-shift {
+  animation: color-shift 4s ease-in-out infinite;
+}
+
+/* ... other global styles */
 
 .text-shadow {
   text-shadow: 2px 2px #963b18;

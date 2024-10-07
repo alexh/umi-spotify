@@ -7,6 +7,8 @@ import SimpleMusicPage from './components/SimpleMusicPage';
 import MatrixRain from './components/MatrixRain';
 import CRTEffect from './components/CRTEffect';
 import { getAccessToken, getUserProfile } from './spotifyApi';
+import { ThemeContext, themes } from './themes';
+import { ThemeManager } from './components/SharedComponents';
 
 function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   const [loadingStep, setLoadingStep] = useState(0);
@@ -179,6 +181,7 @@ function App() {
   });
   const playerControlsRef = useRef(playerControls);
   const [isIntro, setIsIntro] = useState(true);
+  const [theme, setTheme] = useState('default');
 
   const handleLogout = useCallback(() => {
     console.log("Logging out");
@@ -289,25 +292,29 @@ function App() {
 
   console.log("Rendering main app content");
   return (
-    <Router>
-      <div className="bg-[#FF5F00] min-h-screen">
-        <AppContent 
-          token={token}
-          isPlaying={isPlaying}
-          currentSong={currentSong}
-          currentArtist={currentArtist}
-          playerControls={playerControls}
-          onLogout={handleLogout}
-          isIntro={isIntro}
-        />
-        <Player
-          token={token}
-          isPlaying={isPlaying}
-          onPlaybackStateChange={handlePlaybackStateChange}
-          setPlayerControls={setPlayerControlsMemoized}
-        />
-      </div>
-    </Router>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <ThemeManager>
+        <Router>
+          <div className="bg-[#FF5F00] min-h-screen">
+            <AppContent 
+              token={token}
+              isPlaying={isPlaying}
+              currentSong={currentSong}
+              currentArtist={currentArtist}
+              playerControls={playerControls}
+              onLogout={handleLogout}
+              isIntro={isIntro}
+            />
+            <Player
+              token={token}
+              isPlaying={isPlaying}
+              onPlaybackStateChange={handlePlaybackStateChange}
+              setPlayerControls={setPlayerControlsMemoized}
+            />
+          </div>
+        </Router>
+      </ThemeManager>
+    </ThemeContext.Provider>
   );
 }
 

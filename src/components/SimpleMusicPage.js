@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow } from './SharedComponents';
+import React, { useState, useCallback, useEffect, useRef, useContext } from 'react';
+import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow, LogoutWindow, ViewSwitcher } from './SharedComponents';
 import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
-import ViewSwitcher from './ViewSwitcher';
 import EditorEffects from './EditorEffects';
+import { themes, ThemeContext } from '../themes';
+import { useNavigate } from 'react-router-dom';
 
 // Add this function at the top of the file
 function isMobileDevice() {
@@ -30,21 +31,6 @@ function MusicControls({ isPlaying, onPlayPause, onNext, onPrevious, volume, onV
             max={100}
           />
         </div>
-      </div>
-    </RetroWindow>
-  );
-}
-
-function LogoutWindow({ onLogout, position, onPositionChange }) {
-  return (
-    <RetroWindow title="System" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center">
-        <button 
-          onClick={onLogout}
-          className="bg-pantone-165-dark text-white px-4 py-2 rounded hover:bg-pantone-165-darker transition-colors duration-300"
-        >
-          Logout
-        </button>
       </div>
     </RetroWindow>
   );
@@ -79,6 +65,34 @@ function AlbumArtWindow({ albumArt, isIntro, position, onPositionChange, trackUr
   );
 }
 
+// Theme selector component
+function ThemeSelector({ position, onPositionChange }) {
+  const { theme, setTheme } = useContext(ThemeContext);
+
+  return (
+    <RetroWindow title="Theme Selector" position={position} onPositionChange={onPositionChange}>
+      <select 
+        value={theme} 
+        onChange={(e) => setTheme(e.target.value)}
+        className="bg-pantone-165 text-pantone-165-darker px-2 py-1 rounded"
+        style={{ backgroundColor: themes[theme].primary, color: themes[theme].text }}
+      >
+        <option value="default">Default</option>
+        <option value="monochrome">Monochrome</option>
+        <option value="night">Night Rider</option>
+        <option value="cute">Materials Girl</option>
+        <option value="ocean">Ocean</option>
+        <option value="desert">Desert</option>
+        <option value="arctic">Arctic</option>
+        <option value="sunset">Sunset</option>
+        <option value="forest">Camo</option>
+        <option value="neon">Neon</option>
+        <option value="cog">Cog</option>
+      </select>
+    </RetroWindow>
+  );
+}
+
 function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
   console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
 
@@ -92,6 +106,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     logout: { x: 20, y: window.innerHeight - 160 },
     albumArt: { x: 20, y: 80 }, // New position for album art window
     audioAnalysis: { x: 20, y: 300 }, // Position for the new audio analysis window
+    themeSelector: { x: 20, y: window.innerHeight - 280 },
   });
 
   const [currentAlbumArt, setCurrentAlbumArt] = useState(null);
@@ -105,7 +120,8 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [showCoupon, setShowCoupon] = useState(false);
   const konamiCode = useRef([]);
   const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
-  const [isInverted, setIsInverted] = useState(Math.random() < 0.5);
+  const [isInverted, setIsInverted] = useState(Math.random() < 0.1);
+  const [theme, setTheme] = useState('default');
 
   useEffect(() => {
     const handleResize = () => {
@@ -236,8 +252,9 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
       !isMobile && (
         <ViewSwitcher 
           key="switcher"
-        position={windowPositions.switcher}
-        onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
+          position={windowPositions.switcher}
+          onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
+          currentView="visualizer"
         />
       ),
       <LogoutWindow 
@@ -245,6 +262,11 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
         onLogout={onLogout}
         position={windowPositions.logout}
         onPositionChange={(newPos) => updateWindowPosition('logout', newPos)}
+      />,
+      <ThemeSelector 
+        key="themeSelector"
+        position={windowPositions.themeSelector}
+        onPositionChange={(newPos) => updateWindowPosition('themeSelector', newPos)}
       />,
     ];
 
@@ -266,33 +288,37 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   };
 
   return (
-    <CRTEffect isPlaying={isPlaying} tempo={tempo}>
-      <div className="relative w-full h-full" style={{ filter: isInverted ? 'invert(100%)' : 'none' }}>
-        <div className="absolute inset-0 z-10">
-          <EditorEffects>
-            <Visualizer 
-              isPlaying={isPlaying} 
-              updateScore={updateScore}
-              volume={volume}
-              audioAnalysis={null}
-              isMobile={isMobile}
-              isInverted={isInverted}
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <CRTEffect isPlaying={isPlaying} tempo={tempo}>
+        <div className="relative w-full h-full" style={{ backgroundColor: themes[theme].background }}>
+          <div className="absolute inset-0 z-10">
+            <EditorEffects>
+              <Visualizer 
+                isPlaying={isPlaying} 
+                updateScore={updateScore}
+                volume={volume}
+                audioAnalysis={null}
+                isMobile={isMobile}
+                isInverted={isInverted}
+                theme={theme}
+              />
+            </EditorEffects>
+          </div>
+          
+          <div className="relative z-20 w-full h-full" style={{ filter: isInverted ? 'invert(100%)' : 'none' }}>
+            <NowPlayingOverlay 
+              currentSong={currentSong} 
+              artist={currentArtist} 
+              score={score} 
+              isMobile={isMobile} 
+              trackUrl={currentTrackUrl}
+              theme={theme}
             />
-          </EditorEffects>
+            {renderWindows()}
+          </div>
         </div>
-        
-        <div className="relative z-20 w-full h-full" style={{ filter: isInverted ? 'invert(100%)' : 'none' }}>
-          <NowPlayingOverlay 
-            currentSong={currentSong} 
-            artist={currentArtist} 
-            score={score} 
-            isMobile={isMobile} 
-            trackUrl={currentTrackUrl}
-          />
-          {renderWindows()}
-        </div>
-      </div>
-    </CRTEffect>
+      </CRTEffect>
+    </ThemeContext.Provider>
   );
 }
 

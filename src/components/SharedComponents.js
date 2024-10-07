@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { ThemeContext, themes } from '../themes';  // Update this line
 
 // Add this function at the top of the file
 function isMobileDevice() {
@@ -8,6 +9,7 @@ function isMobileDevice() {
 }
 
 export function RetroWindow({ title, children, position, onPositionChange }) {
+  const { theme } = useContext(ThemeContext);
   const [isDragging, setIsDragging] = useState(false);
   const [localPosition, setLocalPosition] = useState(position);
   const dragStartRef = useRef(null);
@@ -74,16 +76,34 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
         maxWidth: '300px',
       };
 
+  // Function to darken a color
+  const darkenColor = (color, amount) => {
+    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) - amount)).toString(16)).substr(-2));
+  };
+
+  const shadowColor = darkenColor(themes[theme].primary, 50);
+  const buttonColor = darkenColor(themes[theme].primary, 30);
+
   return (
     <div 
       ref={windowRef}
-      className={`bg-[#FF5F00] border-2 border-[#CC4C19] rounded-none shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] p-0.5 font-receipt text-black ${isMobile ? 'w-full' : ''}`}
-      style={windowStyle}
+      className={`border-2 rounded-none p-0.5 font-receipt ${isMobile ? 'w-full' : ''}`}
+      style={{
+        ...windowStyle,
+        backgroundColor: themes[theme].primary,
+        borderColor: themes[theme].secondary,
+        color: themes[theme].text,
+        boxShadow: `2px 2px 0 ${shadowColor}, 4px 4px 0 ${themes[theme].primary}`,
+      }}
     >
       <div 
-        className="bg-[#CC4C19] p-1 mb-1.5 font-bold flex justify-between items-center"
+        className="p-1 mb-1.5 font-bold flex justify-between items-center"
         onMouseDown={!isMobile ? handleMouseDown : undefined}
-        style={{ cursor: isMobile ? 'default' : 'grab' }}
+        style={{ 
+          cursor: isMobile ? 'default' : 'grab',
+          backgroundColor: themes[theme].secondary,
+          color: themes[theme].text,
+        }}
       >
         <span>{title}</span>
       </div>
@@ -94,8 +114,10 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist, score, trackUrl }) {
+export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackUrl }) {
   const [localIsMobile, setLocalIsMobile] = useState(isMobileDevice());
+  const { theme } = useContext(ThemeContext);
+  const currentTheme = themes[theme];
 
   useEffect(() => {
     const handleResize = () => {
@@ -109,50 +131,50 @@ export function NowPlayingOverlay({ currentSong, artist, score, trackUrl }) {
   const marqueeText = `${currentSong} by ${artist}`;
 
   return currentSong && (
-    <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 text-[#FF8C00] font-receipt p-2">
-      <div className="border-2 border-[#CC4C19] p-2 flex items-center">
+    <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 font-receipt p-2" style={{ color: currentTheme.text }}>
+      <div className="border-2 p-2 flex items-center" style={{ borderColor: currentTheme.secondary }}>
         {!localIsMobile && <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>}
         <div className="flex-grow overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mx-8 animate-color-shift">{marqueeText}</span>
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
+              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mx-8 animate-color-shift">{marqueeText}</span>
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
+              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mx-8 animate-color-shift">{marqueeText}</span>
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
+              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mx-8 animate-color-shift">{marqueeText}</span>
+              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
+              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
           </div>
           <div className="inline-block animate-marquee" aria-hidden="true">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8">{marqueeText}</span>
+              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8">{marqueeText}</span>
+              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8">{marqueeText}</span>
+              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8">{marqueeText}</span>
+              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
             </a>
           </div>
         </div>
         {!localIsMobile && (
           <div className="text-xl whitespace-nowrap pl-4">
-            <a href="https://utility.materials.nyc">Utility Materials Inc.</a>
+            <a href="https://utility.materials.nyc" style={{ color: currentTheme.secondary }}>Utility Materials Inc.</a>
           </div>
         )}
       </div>
@@ -161,6 +183,7 @@ export function NowPlayingOverlay({ currentSong, artist, score, trackUrl }) {
 }
 
 export function OrangeSlider({ value, onChange, min = 0, max = 100 }) {
+  const { theme } = useContext(ThemeContext);
   const [isDragging, setIsDragging] = useState(false);
   const sliderRef = useRef(null);
 
@@ -202,22 +225,30 @@ export function OrangeSlider({ value, onChange, min = 0, max = 100 }) {
   return (
     <div 
       ref={sliderRef}
-      className="relative w-full h-4 bg-[#FFD700] bg-opacity-30 cursor-pointer"
+      className="relative w-full h-4 cursor-pointer"
       onMouseDown={handleMouseDown}
+      style={{ backgroundColor: themes[theme].secondary + '4D' }} // 30% opacity
     >
       <div 
-        className="absolute top-0 left-0 h-full bg-[#FF4500] z-10"
-        style={{ width: `${percentage}%` }}
+        className="absolute top-0 left-0 h-full"
+        style={{ width: `${percentage}%`, backgroundColor: themes[theme].primary }}
       />
       <div 
-        className="absolute top-0 w-4 h-4 bg-[#FF8C00] border-2 border-[#CC4C19] -mt-0.5 -ml-2 z-20"
-        style={{ left: `${percentage}%` }}
+        className="absolute top-0 w-4 h-4 -mt-0.5 -ml-2 z-20"
+        style={{ 
+          left: `${percentage}%`, 
+          backgroundColor: themes[theme].primary,
+          borderColor: themes[theme].secondary,
+          border: '2px solid',
+          borderRadius: '2px'
+        }}
       />
     </div>
   );
 }
 
 export function MerchWindow({ position, onPositionChange }) {
+  const { theme } = useContext(ThemeContext);
   const [currentMerchIndex, setCurrentMerchIndex] = useState(0);
   const [merchImages, setMerchImages] = useState([]);
 
@@ -271,13 +302,15 @@ export function MerchWindow({ position, onPositionChange }) {
         <div className="flex justify-between w-full mt-2">
           <button 
             onClick={handlePrevious}
-            className="bg-[#CC4C19] text-white px-2 py-1 rounded hover:bg-[#FF8C00] transition-colors"
+            style={{ backgroundColor: themes[theme].secondary, color: themes[theme].text }}
+            className="px-2 py-1 rounded transition-colors"
           >
             Prev
           </button>
           <button 
             onClick={handleNext}
-            className="bg-[#CC4C19] text-white px-2 py-1 rounded hover:bg-[#FF8C00] transition-colors"
+            style={{ backgroundColor: themes[theme].secondary, color: themes[theme].text }}
+            className="px-2 py-1 rounded transition-colors"
           >
             Next
           </button>
@@ -286,7 +319,8 @@ export function MerchWindow({ position, onPositionChange }) {
           href="https://utility.materials.nyc" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="bg-[#CC4C19] text-white px-4 py-2 mt-2 rounded hover:bg-[#FF8C00] transition-colors w-full text-center"
+          style={{ backgroundColor: themes[theme].secondary, color: themes[theme].text }}
+          className="px-4 py-2 mt-2 rounded transition-colors w-full text-center"
         >
           Buy Now
         </a>
@@ -295,9 +329,72 @@ export function MerchWindow({ position, onPositionChange }) {
   );
 }
 
+export function LogoutWindow({ onLogout, position, onPositionChange }) {
+  const { theme } = useContext(ThemeContext);
+
+  return (
+    <RetroWindow title="System" position={position} onPositionChange={onPositionChange}>
+      <div className="flex flex-col items-center">
+        <button 
+          onClick={onLogout}
+          style={{
+            backgroundColor: themes[theme].secondary,
+            color: themes[theme].text
+          }}
+          className="px-4 py-2 rounded transition-colors duration-300 hover:opacity-80"
+        >
+          Logout
+        </button>
+      </div>
+    </RetroWindow>
+  );
+}
+
+export function ViewSwitcher({ position, onPositionChange, currentView }) {
+  const { theme } = useContext(ThemeContext);
+  console.log('currentView');
+  console.log(currentView);
+  const oppositeView = currentView === 'visualizer' ? 'car' : 'visualizer';
+  const buttonText = `Switch to ${oppositeView === 'visualizer' ? 'Visualizer' : 'Car'} View`;
+
+  return (
+    <RetroWindow title="View Switcher" position={position} onPositionChange={onPositionChange}>
+      <div className="flex flex-col items-center">
+        <a 
+          href={`/${oppositeView}`}
+          style={{
+            backgroundColor: themes[theme].secondary,
+            color: themes[theme].text
+          }}
+          className="px-4 py-2 rounded transition-colors duration-300 hover:opacity-80 w-full text-center"
+        >
+          {buttonText}
+        </a>
+      </div>
+    </RetroWindow>
+  );
+}
+
+export function ThemeManager({ children }) {
+  const { theme } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // Update CSS variables when the theme changes
+    document.documentElement.style.setProperty('--theme-primary', themes[theme].primary);
+    document.documentElement.style.setProperty('--theme-secondary', themes[theme].secondary);
+    document.documentElement.style.setProperty('--theme-text', themes[theme].text);
+    document.documentElement.style.setProperty('--theme-background', themes[theme].background);
+  }, [theme]);
+
+  return children;
+}
+
 export default {
   RetroWindow,
   NowPlayingOverlay,
   OrangeSlider,
-  MerchWindow
+  MerchWindow,
+  LogoutWindow,
+  ViewSwitcher,
+  ThemeManager
 };

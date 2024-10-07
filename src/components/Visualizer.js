@@ -1,12 +1,16 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useContext } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { glitchShader, calculateGlitchIntensity } from '../utils/glitchEffect';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { ThemeContext, themes } from '../themes';
+import { useThree, useFrame } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 
 const phrases = [
   "Gears Turning, Time Burning",
@@ -116,11 +120,13 @@ const vertexShader = `
 
 const fragmentShader = `
   uniform float u_time;
+  uniform vec3 themeColor;
   
   varying vec3 vNormal;
 
   void main() {
-    vec3 pantone165 = vec3(1.0, 0.373, 0.122); // Pantone 165 in RGB
+    // Use the theme color instead of a hard-coded color
+    vec3 baseColor = themeColor;
     
     // Directional light
     vec3 light = normalize(vec3(1.0, 1.0, 1.0));
@@ -128,15 +134,15 @@ const fragmentShader = `
 
     // Ambient light
     float ambientStrength = 0.3;
-    vec3 ambient = ambientStrength * pantone165;
+    vec3 ambient = ambientStrength * baseColor;
 
     // Combine directional and ambient light
-    vec3 result = (ambient + dProd) * pantone165;
+    vec3 result = (ambient + dProd) * baseColor;
 
     // Enhance the edges with a fresnel-like effect
     float fresnelStrength = 0.5;
     float fresnel = fresnelStrength * (1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)));
-    result += fresnel * pantone165;
+    result += fresnel * baseColor;
 
     // Add some time-based color variation
     result += 0.1 * vec3(sin(u_time), cos(u_time), sin(u_time * 0.5));
@@ -172,11 +178,11 @@ const pixelationShader = {
   `
 };
 
-function create3DText(scene, camera, updateScore) {
+function create3DText(scene, camera, updateScore, currentTheme) {
   const textMaterial = new THREE.ShaderMaterial({
     uniforms: {
-      color: { value: new THREE.Color(0xCC4C19) }, // Darker orange
-      pulseColor: { value: new THREE.Color(0xFF5F00) }, // Lighter orange for pulsing
+      color: { value: new THREE.Color(themes[currentTheme].secondary) },
+      pulseColor: { value: new THREE.Color(themes[currentTheme].primary) },
       time: { value: 0 },
     },
     vertexShader: `
@@ -196,8 +202,8 @@ function create3DText(scene, camera, updateScore) {
       varying vec3 vNormal;
       void main() {
         float intensity = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 4.0);
-        float pulse = (sin(time * 2.0) + 1.0) * 0.5; // Pulsing effect
-        vec3 finalColor = mix(color, pulseColor, pulse * 0.3); // Adjust 0.3 to control pulse intensity
+        float pulse = (sin(time * 2.0) + 1.0) * 0.5;
+        vec3 finalColor = mix(color, pulseColor, pulse * 0.3);
         gl_FragColor = vec4(mix(finalColor, vec3(1.0), intensity), 1.0);
       }
     `,
@@ -371,64 +377,73 @@ function create3DText(scene, camera, updateScore) {
   scheduleNextUpdate();
 }
 
-function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, isInverted }) {
+// Create a shared animation state
+const useAnimationState = () => {
+  const ref = useRef({ y: 0, rotX: 0, rotZ: 0 });
+  
+  useFrame((_state, _delta) => {
+    const time = Date.now() * 0.001;
+    ref.current.y = Math.sin(time * 0.5) * 0.05;
+    ref.current.rotX = Math.sin(time * 0.4) * 0.01;
+    ref.current.rotZ = Math.sin(time * 0.3) * 0.01;
+  });
+
+  return ref;
+};
+
+function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, isInverted, theme }) {
   const mountRef = useRef(null);
-  const gearSceneRef = useRef(null);
+  const sceneRef = useRef(null);
   const textSceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
   const meshRef = useRef(null);
   const animationFrameRef = useRef(null);
-  const uniformsRef = useRef({
-    u_time: { value: 0 },
-    u_frequency: { value: 0 },
-  });
   const isPlayingRef = useRef(isPlaying);
   const targetRotationRef = useRef({ y: 0, z: 0 });
   const currentRotationRef = useRef({ y: 0, z: 0 });
   const [font, setFont] = useState(null);
+  const { theme: currentTheme } = useContext(ThemeContext);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
-    targetRotationRef.current.y = isPlaying ? Math.PI : 0;
+    targetRotationRef.current.y = isPlaying ? Math.PI : 0; // Flip 180 degrees when playing starts/stops
   }, [isPlaying]);
 
   useEffect(() => {
     const width = mountRef.current.clientWidth;
     const height = mountRef.current.clientHeight;
 
-    // Scene setup
     const scene = new THREE.Scene();
+    const textScene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(64, width / height, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: false });
 
     renderer.setSize(width, height);
-    renderer.setClearColor(isInverted ? 0x00A0FF : 0xFF5F00, 1); // Inverted or normal background color
+    renderer.setClearColor(themes[currentTheme].primary, 1);
     mountRef.current?.appendChild(renderer.domElement);
 
     camera.position.z = 5;
 
-    // Add ambient light to the main scene
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
-    // Text scene setup
-    const textScene = new THREE.Scene();
-
-    gearSceneRef.current = scene;
+    sceneRef.current = scene;
     textSceneRef.current = textScene;
     cameraRef.current = camera;
     rendererRef.current = renderer;
 
-    // Material setup
     const material = new THREE.ShaderMaterial({
-      uniforms: uniformsRef.current,
+      uniforms: {
+        u_time: { value: 0 },
+        u_frequency: { value: 0 },
+        themeColor: { value: new THREE.Color(themes[currentTheme].primary) }
+      },
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       wireframe: false,
     });
 
-    // Load the gear model
     const loader = new GLTFLoader();
     loader.load(
       '/models/gear.gltf',
@@ -443,13 +458,14 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, i
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
         
-        model.children.forEach((child) => {
-          child.position.sub(center);
-        });
-
-        model.scale.set(1.7, 1.7, 1.7);
-        scene.add(model);
-        meshRef.current = model;
+        model.position.sub(center);
+        
+        const modelGroup = new THREE.Group();
+        modelGroup.add(model);
+        
+        modelGroup.scale.set(1.7, 1.7, 1.7);
+        scene.add(modelGroup);
+        meshRef.current = modelGroup;
       },
       (xhr) => {
         console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -461,41 +477,42 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, i
 
     const clock = new THREE.Clock();
 
-    // Post-processing setup for gear scene
-    const gearComposer = new EffectComposer(renderer);
+    const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
-    gearComposer.addPass(renderPass);
+    composer.addPass(renderPass);
 
     const glitchPass = new ShaderPass(glitchShader);
-    gearComposer.addPass(glitchPass);
+    composer.addPass(glitchPass);
 
     const pixelPass = new ShaderPass(pixelationShader);
     pixelPass.uniforms["resolution"].value = new THREE.Vector2(width, height);
     pixelPass.uniforms["pixelSize"].value = 1;
-    gearComposer.addPass(pixelPass);
+    composer.addPass(pixelPass);
 
     if (!isMobile) {
-      // Load font for 3D text only on non-mobile devices
       const fontLoader = new FontLoader();
       fontLoader.load('/Receipt_Narrow_Regular.json', (loadedFont) => {
         setFont(loadedFont);
       });
     }
 
-    // Animation
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
-      uniformsRef.current.u_time.value = elapsedTime;
+      material.uniforms.u_time.value = elapsedTime;
       
       if (meshRef.current) {
+        // Smooth rotation for play/pause (y-axis flip)
         currentRotationRef.current.y += (targetRotationRef.current.y - currentRotationRef.current.y) * 0.1;
         meshRef.current.rotation.y = currentRotationRef.current.y;
 
+        // Continuous rotation on z-axis when playing
         if (isPlayingRef.current) {
-          targetRotationRef.current.z += 0.005;
+          targetRotationRef.current.z += 0.02;
         }
         currentRotationRef.current.z += (targetRotationRef.current.z - currentRotationRef.current.z) * 0.1;
         meshRef.current.rotation.z = currentRotationRef.current.z;
+
+        material.uniforms.themeColor.value.set(themes[currentTheme].primary);
       }
 
       const glitchIntensity = calculateGlitchIntensity(audioAnalysis, elapsedTime, isPlayingRef.current, false);
@@ -508,18 +525,14 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, i
       const pixelSize = 1 + Math.abs(Math.sin(elapsedTime * Math.PI * pulseFrequency)) * pulseMagnitude;
       pixelPass.uniforms["pixelSize"].value = pixelSize;
 
-      // Render gear scene with effects
-      gearComposer.render();
+      composer.render();
 
-      // Render text scene without effects
       renderer.autoClear = false;
       renderer.clearDepth();
       renderer.render(textSceneRef.current, camera);
 
-      // Ensure the background color is set every frame
-      renderer.setClearColor(isInverted ? 0x00A0FF : 0xFF5F00, 1);
+      renderer.setClearColor(themes[currentTheme].primary, 1);
 
-      // Apply color inversion if needed
       if (isInverted) {
         renderer.domElement.style.filter = 'invert(100%)';
       } else {
@@ -531,33 +544,13 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, i
 
     animate();
 
-    // Handle resize
-    const handleResize = () => {
-      const newWidth = mountRef.current.clientWidth;
-      const newHeight = mountRef.current.clientHeight;
-      camera.aspect = newWidth / newHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
-      gearComposer.setSize(newWidth, newHeight);
-      pixelPass.uniforms["resolution"].value.set(newWidth, newHeight);
-      // Update other necessary components
-      if (font && textSceneRef.current && camera) {
-        create3DText(textSceneRef.current, camera, updateScore);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-
     return () => {
-      window.removeEventListener('resize', handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      // Check if mountRef.current still exists before removing child
       if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
       }
-      // Dispose of Three.js objects
       scene.traverse((object) => {
         if (object.geometry) {
           object.geometry.dispose();
@@ -571,19 +564,14 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, i
         }
       });
       renderer.dispose();
-      if (gearComposer) {
-        gearComposer.dispose();
-      }
     };
-  }, [audioAnalysis, isPlaying, updateScore, isMobile, isInverted]);
+  }, [audioAnalysis, isPlaying, updateScore, isMobile, isInverted, currentTheme]);
 
   useEffect(() => {
     if (!isMobile && font && textSceneRef.current && cameraRef.current) {
-      create3DText(textSceneRef.current, cameraRef.current, updateScore);
+      create3DText(textSceneRef.current, cameraRef.current, updateScore, currentTheme);
     }
-  }, [font, updateScore, isMobile]);
-
-  console.log("Visualizer render", { isPlaying, volume, hasAudioAnalysis: !!audioAnalysis });
+  }, [font, updateScore, isMobile, currentTheme]);
 
   return <div ref={mountRef} style={{ width: '100%', height: '100%' }} />;
 }
