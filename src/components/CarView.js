@@ -1,15 +1,17 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Text, useGLTF } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Text, useGLTF, useKeyboardControls, KeyboardControls } from '@react-three/drei';
 import { EffectComposer, Bloom, Pixelation } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { Effect } from 'postprocessing';
 import { Uniform } from 'three';
 import { debounce } from 'lodash';
-import { RetroWindow, NowPlayingOverlay, OrangeSlider } from './SharedComponents';
+import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow } from './SharedComponents';
 import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { OrbitControls as OrbitControlsThree } from 'three/examples/jsm/controls/OrbitControls';
 
 class OrangeFilterEffect extends Effect {
   constructor({ intensity = 1.0 } = {}) {
@@ -52,10 +54,15 @@ const useAnimationState = () => {
   return ref;
 };
 
+function easeInOutQuad(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
 function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious }) {
   const { scene } = useGLTF('/models/Flying_Car-.gltf', true);
   const modelRef = useRef();
-  const animationState = useAnimationState();
+  const [carTurnAngle, setCarTurnAngle] = useState(0);
+  const targetTurnAngle = useRef(0);
 
   useEffect(() => {
     if (scene) {
@@ -81,11 +88,46 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
     }
   }, [scene]);
 
-  useFrame(() => {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      switch (event.key) {
+        case 'ArrowLeft':
+          targetTurnAngle.current = 0.1;
+          break;
+        case 'ArrowRight':
+          targetTurnAngle.current = -0.1;
+          break;
+        default:
+          break;
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        targetTurnAngle.current = 0;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  useFrame((state, delta) => {
     if (modelRef.current) {
-      modelRef.current.position.y = -1.70 + animationState.current.y;
-      modelRef.current.rotation.x = animationState.current.rotX;
-      modelRef.current.rotation.z = animationState.current.rotZ;
+      // Smooth car turning
+      const turnDifference = targetTurnAngle.current - carTurnAngle;
+      setCarTurnAngle(prev => prev + turnDifference * 0.1);
+
+      modelRef.current.position.y = -1.70 + Math.sin(state.clock.elapsedTime * 0.5) * 0.05;
+      modelRef.current.rotation.y = carTurnAngle + Math.sin(state.clock.elapsedTime * 0.3) * 0.01;
+      
+      // Add slight roll when turning
+      modelRef.current.rotation.z = -carTurnAngle * 0.2;
     }
   });
 
@@ -103,13 +145,46 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
   );
 }
 
-function CameraController({ zoom, fov }) {
+function CameraController({ zoom, fov, carTurnAngle, viewMode }) {
   const { camera } = useThree();
-  useFrame(() => {
-    camera.position.lerp(new THREE.Vector3(0, 0.7 * zoom, -2.1 * zoom), 0.1);
+  const basePosition = useMemo(() => {
+    return viewMode === 'firstPerson'
+      ? new THREE.Vector3(0, 0.7 * zoom, -2.1 * zoom)
+      : new THREE.Vector3(0, 5 * zoom, -25 * zoom); // Moved further back for third-person view
+  }, [zoom, viewMode]);
+  
+  const currentPosition = useRef(new THREE.Vector3().copy(basePosition));
+  const lookAtTarget = useRef(new THREE.Vector3(0, 1, 5));
+
+  useFrame((state) => {
+    // Update position based on car turn angle
+    const swayAmount = -carTurnAngle * (viewMode === 'firstPerson' ? 4 : 2);
+    currentPosition.current.x = basePosition.x + swayAmount;
+    
+    // Add a slight vertical movement
+    currentPosition.current.y = basePosition.y + Math.sin(state.clock.elapsedTime * 0.5) * 0.05;
+
+    // Smoothly interpolate camera position
+    camera.position.lerp(currentPosition.current, 0.1);
+
+    if (viewMode === 'thirdPerson') {
+      // Look at a point slightly ahead of and above the car
+      lookAtTarget.current.set(swayAmount, 1, 5);
+      camera.lookAt(lookAtTarget.current);
+      
+      // Apply a slight upward tilt
+      camera.rotateX(-Math.PI / 12); // Tilt up by 15 degrees
+    } else {
+      // First-person view
+      lookAtTarget.current.set(camera.position.x, camera.position.y, 0);
+      camera.lookAt(lookAtTarget.current);
+    }
+
+    // Update camera properties
     camera.fov = fov;
     camera.updateProjectionMatrix();
   });
+
   return null;
 }
 
@@ -250,8 +325,60 @@ function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dust
   );
 }
 
-function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI, fov }) {
+function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI, fov, viewMode }) {
   const orbitControlsRef = useRef();
+  const [carTurnAngle, setCarTurnAngle] = useState(0);
+  const [currentFov, setCurrentFov] = useState(fov);
+  const [currentDustSpeed, setCurrentDustSpeed] = useState(dustSpeed);
+
+  // Fallback for keyboard controls
+  const [keys, setKeys] = useState({ ArrowLeft: false, ArrowRight: false, ArrowUp: false });
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        setKeys(prevKeys => ({ ...prevKeys, [event.key]: true }));
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        setKeys(prevKeys => ({ ...prevKeys, [event.key]: false }));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  useFrame((state, delta) => {
+    // Update car turn angle smoothly
+    const turnSpeed = 0.5;
+    if (keys.ArrowLeft) {
+      setCarTurnAngle(angle => Math.max(angle - turnSpeed * delta, -0.1));
+    } else if (keys.ArrowRight) {
+      setCarTurnAngle(angle => Math.min(angle + turnSpeed * delta, 0.1));
+    } else {
+      setCarTurnAngle(angle => {
+        if (Math.abs(angle) < 0.01) return 0;
+        return angle * 0.9; // Gradually return to center
+      });
+    }
+
+    // Increase FOV and dust speed when ArrowUp is pressed
+    if (keys.ArrowUp) {
+      setCurrentFov(prevFov => Math.min(prevFov + 30 * delta, 120)); // Max FOV of 120
+      setCurrentDustSpeed(prevSpeed => Math.min(prevSpeed + 10 * delta, 20)); // Max speed of 20
+    } else {
+      setCurrentFov(prevFov => Math.max(prevFov - 30 * delta, fov)); // Return to original FOV
+      setCurrentDustSpeed(prevSpeed => Math.max(prevSpeed - 10 * delta, dustSpeed)); // Return to original speed
+    }
+  });
 
   return (
     <Scene 
@@ -261,11 +388,11 @@ function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevi
       pixelSize={pixelSize}
       dustSize={dustSize}
       dustCount={dustCount}
-      dustSpeed={dustSpeed}
+      dustSpeed={currentDustSpeed}
       isInteractingWithUI={isInteractingWithUI}
     >
-      <PerspectiveCamera makeDefault fov={fov} />
-      <CameraController zoom={zoom} fov={fov} />
+      <PerspectiveCamera makeDefault fov={currentFov} />
+      <CameraController zoom={zoom} fov={currentFov} carTurnAngle={carTurnAngle} viewMode={viewMode} />
       <CarModel 
         token={token}
         currentSong={currentSong}
@@ -336,26 +463,6 @@ function PixelationSlider({ pixelSize, setPixelSize, position, onPositionChange 
   );
 }
 
-function MerchWindow({ position, onPositionChange }) {
-  return (
-    <RetroWindow title="Merch" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center" style={{ width: '200px', height: '350px' }}>
-        <div style={{ width: '100%', height: '350px', overflow: 'hidden' }}>
-          <img src="/merch.png" alt="Merchandise" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-        <a 
-          href="https://utility.materials.nyc" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="bg-[#CC4C19] text-white px-4 py-2 mt-2 rounded hover:bg-[#FF8C00] transition-colors"
-        >
-          Buy Now
-        </a>
-      </div>
-    </RetroWindow>
-  );
-}
-
 export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, playerControls }) {
   const [viewMode, setViewMode] = useState('firstPerson');
   const [zoom, setZoom] = useState(0.47);
@@ -386,7 +493,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   };
 
   useEffect(() => {
-    setZoom(viewMode === 'firstPerson' ? 0.47 : 3);
+    setZoom(viewMode === 'firstPerson' ? 0.47 : 1.5); // Adjusted zoom for third-person view
   }, [viewMode]);
 
   const handleMouseEnterUI = useCallback(() => setIsInteractingWithUI(true), []);
@@ -413,6 +520,18 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
 
     return () => clearInterval(intervalId);
   }, [playerControls]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      console.log("Key pressed:", event.key);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <CRTEffect isPlaying={isPlaying} tempo={tempo}>

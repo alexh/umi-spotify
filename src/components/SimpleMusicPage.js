@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { RetroWindow, NowPlayingOverlay, OrangeSlider } from './SharedComponents';
+import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow } from './SharedComponents';
 import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
 import ViewSwitcher from './ViewSwitcher';
@@ -10,26 +10,6 @@ function isMobileDevice() {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
   const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
   return mobileRegex.test(userAgent) || (window.innerWidth <= 768);
-}
-
-function MerchWindow({ position, onPositionChange }) {
-  return (
-    <RetroWindow title="Merch" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center" style={{ width: '200px', height: '350px' }}>
-        <div style={{ width: '100%', height: '350px', overflow: 'hidden' }}>
-          <img src="/merch.png" alt="Merchandise" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-        <a 
-          href="https://utility.materials.nyc/products/hoodie" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="bg-[#CC4C19] text-white px-4 py-2 mt-2 rounded hover:bg-[#FF8C00] transition-colors"
-        >
-          Buy Now
-        </a>
-      </div>
-    </RetroWindow>
-  );
 }
 
 function MusicControls({ isPlaying, onPlayPause, onNext, onPrevious, volume, onVolumeChange, position, onPositionChange }) {
@@ -107,7 +87,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [score, setScore] = useState(0);
   const [windowPositions, setWindowPositions] = useState({
     music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
-    merch: { x: window.innerWidth - 300, y: 200 },
+    merch: { x: window.innerWidth - 300, y: 180 },
     switcher: { x: window.innerWidth - 300, y: 80 },
     logout: { x: 20, y: window.innerHeight - 160 },
     albumArt: { x: 20, y: 80 }, // New position for album art window

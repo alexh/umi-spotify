@@ -116,37 +116,37 @@ export function NowPlayingOverlay({ currentSong, artist, score, trackUrl }) {
           <div className="inline-block animate-marquee">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+              <span className="mx-8 animate-color-shift">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+              <span className="mx-8 animate-color-shift">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+              <span className="mx-8 animate-color-shift">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" />
-              <span className="mr-8 animate-color-shift">{marqueeText}</span>
+              <span className="mx-8 animate-color-shift">{marqueeText}</span>
             </a>
           </div>
           <div className="inline-block animate-marquee" aria-hidden="true">
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mr-8">{marqueeText}</span>
+              <span className="mx-8">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mr-8">{marqueeText}</span>
+              <span className="mx-8">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mr-8">{marqueeText}</span>
+              <span className="mx-8">{marqueeText}</span>
             </a>
             <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
               <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mr-8">{marqueeText}</span>
+              <span className="mx-8">{marqueeText}</span>
             </a>
           </div>
         </div>
@@ -217,8 +217,87 @@ export function OrangeSlider({ value, onChange, min = 0, max = 100 }) {
   );
 }
 
+export function MerchWindow({ position, onPositionChange }) {
+  const [currentMerchIndex, setCurrentMerchIndex] = useState(0);
+  const [merchImages, setMerchImages] = useState([]);
+
+  useEffect(() => {
+    // Load merch images
+    const loadMerchImages = async () => {
+      const images = [];
+      let i = 1;
+      for (let i = 1; ; i++) {
+        try {
+          const module = await import(`/public/merch/merch${i}.png`);
+          images.push(module.default);
+        } catch (error) {
+          break; // Stop when no more images are found
+        }
+      }
+      setMerchImages(images);
+    };
+
+    loadMerchImages();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentMerchIndex((prevIndex) => (prevIndex + 1) % merchImages.length);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [merchImages.length]);
+
+  const handlePrevious = () => {
+    setCurrentMerchIndex((prevIndex) => (prevIndex - 1 + merchImages.length) % merchImages.length);
+  };
+
+  const handleNext = () => {
+    setCurrentMerchIndex((prevIndex) => (prevIndex + 1) % merchImages.length);
+  };
+
+  return (
+    <RetroWindow title="Merch" position={position} onPositionChange={onPositionChange}>
+      <div className="flex flex-col items-center" style={{ width: '200px', height: '400px' }}>
+        <div style={{ width: '100%', height: '400px', overflow: 'hidden' }}>
+          {merchImages.length > 0 && (
+            <img 
+              src={merchImages[currentMerchIndex]} 
+              alt={`Merchandise ${currentMerchIndex + 1}`} 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          )}
+        </div>
+        <div className="flex justify-between w-full mt-2">
+          <button 
+            onClick={handlePrevious}
+            className="bg-[#CC4C19] text-white px-2 py-1 rounded hover:bg-[#FF8C00] transition-colors"
+          >
+            Previous
+          </button>
+          <button 
+            onClick={handleNext}
+            className="bg-[#CC4C19] text-white px-2 py-1 rounded hover:bg-[#FF8C00] transition-colors"
+          >
+            Next
+          </button>
+        </div>
+        <a 
+          href="https://utility.materials.nyc" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="bg-[#CC4C19] text-white px-4 py-2 mt-2 rounded hover:bg-[#FF8C00] transition-colors w-full text-center"
+        >
+          Buy Now
+        </a>
+      </div>
+    </RetroWindow>
+  );
+}
+
 export default {
   RetroWindow,
   NowPlayingOverlay,
-  OrangeSlider
+  OrangeSlider,
+  MerchWindow
 };

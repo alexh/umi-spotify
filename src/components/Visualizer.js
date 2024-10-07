@@ -304,14 +304,14 @@ function create3DText(scene, camera, updateScore) {
         if (textMesh.position.x <= leftBound || textMesh.position.x >= rightBound) {
           speed.x *= -1;
           textMesh.position.x = Math.max(leftBound, Math.min(rightBound, textMesh.position.x));
-          console.log('Horizontal bounce at:', textMesh.position.x);
+          // console.log('Horizontal bounce at:', textMesh.position.x);
           hitCorner = Math.abs(textMesh.position.y - topBound) < cornerThreshold || 
                       Math.abs(textMesh.position.y - bottomBound) < cornerThreshold;
         }
         if (textMesh.position.y <= bottomBound || textMesh.position.y >= topBound) {
           speed.y *= -1;
           textMesh.position.y = Math.max(bottomBound, Math.min(topBound, textMesh.position.y));
-          console.log('Vertical bounce at:', textMesh.position.y);
+          // console.log('Vertical bounce at:', textMesh.position.y);
           hitCorner = hitCorner || 
                       Math.abs(textMesh.position.x - leftBound) < cornerThreshold || 
                       Math.abs(textMesh.position.x - rightBound) < cornerThreshold;
