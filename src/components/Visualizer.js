@@ -371,7 +371,7 @@ function create3DText(scene, camera, updateScore) {
   scheduleNextUpdate();
 }
 
-function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile }) {
+function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, isInverted }) {
   const mountRef = useRef(null);
   const gearSceneRef = useRef(null);
   const textSceneRef = useRef(null);
@@ -403,7 +403,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile })
     const renderer = new THREE.WebGLRenderer({ antialias: false });
 
     renderer.setSize(width, height);
-    renderer.setClearColor(0xFF5F00, 1); // Set the background color to #FF5F00
+    renderer.setClearColor(isInverted ? 0x00A0FF : 0xFF5F00, 1); // Inverted or normal background color
     mountRef.current?.appendChild(renderer.domElement);
 
     camera.position.z = 5;
@@ -517,7 +517,14 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile })
       renderer.render(textSceneRef.current, camera);
 
       // Ensure the background color is set every frame
-      renderer.setClearColor(0xFF5F00, 1);
+      renderer.setClearColor(isInverted ? 0x00A0FF : 0xFF5F00, 1);
+
+      // Apply color inversion if needed
+      if (isInverted) {
+        renderer.domElement.style.filter = 'invert(100%)';
+      } else {
+        renderer.domElement.style.filter = 'none';
+      }
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
@@ -568,7 +575,7 @@ function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile })
         gearComposer.dispose();
       }
     };
-  }, [audioAnalysis, isPlaying, updateScore, isMobile]);
+  }, [audioAnalysis, isPlaying, updateScore, isMobile, isInverted]);
 
   useEffect(() => {
     if (!isMobile && font && textSceneRef.current && cameraRef.current) {

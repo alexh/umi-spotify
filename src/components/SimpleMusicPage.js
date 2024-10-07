@@ -86,9 +86,9 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [volume, setVolume] = useState(50);
   const [score, setScore] = useState(0);
   const [windowPositions, setWindowPositions] = useState({
-    music: { x: window.innerWidth - 300, y: window.innerHeight - 200 },
+    music: { x: window.innerWidth - 300, y: window.innerHeight - 180 },
     merch: { x: window.innerWidth - 300, y: 180 },
-    switcher: { x: window.innerWidth - 300, y: 80 },
+    switcher: { x: window.innerWidth - 300, y: 70 },
     logout: { x: 20, y: window.innerHeight - 160 },
     albumArt: { x: 20, y: 80 }, // New position for album art window
     audioAnalysis: { x: 20, y: 300 }, // Position for the new audio analysis window
@@ -105,6 +105,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [showCoupon, setShowCoupon] = useState(false);
   const konamiCode = useRef([]);
   const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
+  const [isInverted, setIsInverted] = useState(Math.random() < 0.5);
 
   useEffect(() => {
     const handleResize = () => {
@@ -266,7 +267,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
 
   return (
     <CRTEffect isPlaying={isPlaying} tempo={tempo}>
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full" style={{ filter: isInverted ? 'invert(100%)' : 'none' }}>
         <div className="absolute inset-0 z-10">
           <EditorEffects>
             <Visualizer 
@@ -275,11 +276,12 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
               volume={volume}
               audioAnalysis={null}
               isMobile={isMobile}
+              isInverted={isInverted}
             />
           </EditorEffects>
         </div>
         
-        <div className="relative z-20 w-full h-full">
+        <div className="relative z-20 w-full h-full" style={{ filter: isInverted ? 'invert(100%)' : 'none' }}>
           <NowPlayingOverlay 
             currentSong={currentSong} 
             artist={currentArtist} 

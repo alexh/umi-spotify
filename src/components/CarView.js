@@ -191,20 +191,30 @@ function CameraController({ zoom, fov, carTurnAngle, viewMode }) {
 function ViewToggle({ viewMode, setViewMode, position, onPositionChange }) {
   return (
     <RetroWindow title="Camera View Selector" position={position} onPositionChange={onPositionChange}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <label>
+      <div className="flex flex-col space-y-2">
+        <label className="flex items-center cursor-pointer">
           <input 
             type="radio" 
+            className="hidden"
             checked={viewMode === 'firstPerson'} 
             onChange={() => setViewMode('firstPerson')}
-          /> First Person
+          />
+          <span className="relative w-4 h-4 mr-2 bg-[#FFD700] bg-opacity-30 rounded-sm">
+            <span className={`absolute inset-0 bg-[#FF4500] rounded-sm transform scale-0 transition-transform duration-200 ${viewMode === 'firstPerson' ? 'scale-100' : ''}`}></span>
+          </span>
+          First Person
         </label>
-        <label>
+        <label className="flex items-center cursor-pointer">
           <input 
             type="radio" 
+            className="hidden"
             checked={viewMode === 'thirdPerson'} 
             onChange={() => setViewMode('thirdPerson')}
-          /> Third Person
+          />
+          <span className="relative w-4 h-4 mr-2 bg-[#FFD700] bg-opacity-30 rounded-sm">
+            <span className={`absolute inset-0 bg-[#FF4500] rounded-sm transform scale-0 transition-transform duration-200 ${viewMode === 'thirdPerson' ? 'scale-100' : ''}`}></span>
+          </span>
+          Third Person
         </label>
       </div>
     </RetroWindow>
@@ -478,7 +488,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
     dust: { x: 20, y: 120 },
     view: { x: 20, y: window.innerHeight - 150 },
     music: { x: window.innerWidth - 300, y: window.innerHeight - 160 },
-    merch: { x: window.innerWidth - 300, y: 220 },
+    merch: { x: window.innerWidth - 300, y: 200 },
     switcher: { x: window.innerWidth - 300, y: 80 },
     fov: { x: 20, y: window.innerHeight - 220 },
   });

@@ -273,7 +273,7 @@ export function MerchWindow({ position, onPositionChange }) {
             onClick={handlePrevious}
             className="bg-[#CC4C19] text-white px-2 py-1 rounded hover:bg-[#FF8C00] transition-colors"
           >
-            Previous
+            Prev
           </button>
           <button 
             onClick={handleNext}
