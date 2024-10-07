@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState, useContext } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
@@ -9,8 +8,6 @@ import { glitchShader, calculateGlitchIntensity } from '../utils/glitchEffect';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { ThemeContext, themes } from '../themes';
-import { useThree, useFrame } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
 
 const phrases = [
   "Gears Turning, Time Burning",
@@ -377,21 +374,7 @@ function create3DText(scene, camera, updateScore, currentTheme) {
   scheduleNextUpdate();
 }
 
-// Create a shared animation state
-const useAnimationState = () => {
-  const ref = useRef({ y: 0, rotX: 0, rotZ: 0 });
-  
-  useFrame((_state, _delta) => {
-    const time = Date.now() * 0.001;
-    ref.current.y = Math.sin(time * 0.5) * 0.05;
-    ref.current.rotX = Math.sin(time * 0.4) * 0.01;
-    ref.current.rotZ = Math.sin(time * 0.3) * 0.01;
-  });
-
-  return ref;
-};
-
-function Visualizer({ isPlaying, volume, audioAnalysis, updateScore, isMobile, isInverted, theme }) {
+function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, isInverted, _theme }) {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
   const textSceneRef = useRef(null);

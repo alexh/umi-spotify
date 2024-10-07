@@ -7,7 +7,7 @@ import SimpleMusicPage from './components/SimpleMusicPage';
 import MatrixRain from './components/MatrixRain';
 import CRTEffect from './components/CRTEffect';
 import { getAccessToken, getUserProfile } from './spotifyApi';
-import { ThemeContext, themes } from './themes';
+import { ThemeContext } from './themes';
 import { ThemeManager } from './components/SharedComponents';
 
 function LoadingSequence({ onLoadingComplete, onMusicStart }) {

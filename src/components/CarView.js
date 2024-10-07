@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense, useContext } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Text, useGLTF, useKeyboardControls, KeyboardControls } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Text, useGLTF } from '@react-three/drei';
 import { EffectComposer, Bloom, Pixelation } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
@@ -9,8 +9,6 @@ import { Uniform } from 'three';
 import { debounce } from 'lodash';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow } from './SharedComponents';
 import CRTEffect from './CRTEffect';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { OrbitControls as OrbitControlsThree } from 'three/examples/jsm/controls/OrbitControls';
 import { themes, ThemeContext } from '../themes';
 import { useNavigate } from 'react-router-dom';
 
@@ -75,24 +73,6 @@ function ThemeFilter({ intensity = 1, theme }) {
   }, [effect, theme]);
 
   return <primitive object={effect} />;
-}
-
-// Create a shared animation state
-const useAnimationState = () => {
-  const ref = useRef({ y: 0, rotX: 0, rotZ: 0 });
-  
-  useFrame((_state, _delta) => {
-    const time = Date.now() * 0.001;
-    ref.current.y = Math.sin(time * 0.5) * 0.05;
-    ref.current.rotX = Math.sin(time * 0.4) * 0.01;
-    ref.current.rotZ = Math.sin(time * 0.3) * 0.01;
-  });
-
-  return ref;
-};
-
-function easeInOutQuad(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
 function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious }) {
@@ -161,7 +141,7 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
     };
   }, []);
 
-  useFrame((state, delta) => {
+  useFrame((state, _delta) => {
     if (modelRef.current) {
       // Smooth car turning
       const turnDifference = targetTurnAngle.current - carTurnAngle;

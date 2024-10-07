@@ -82,7 +82,6 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   };
 
   const shadowColor = darkenColor(themes[theme].primary, 50);
-  const buttonColor = darkenColor(themes[theme].primary, 30);
 
   return (
     <div 
@@ -114,7 +113,7 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist, score, isMobile, trackUrl }) {
+export function NowPlayingOverlay({ currentSong, artist, score, _isMobile, trackUrl }) {
   const [localIsMobile, setLocalIsMobile] = useState(isMobileDevice());
   const { theme } = useContext(ThemeContext);
   const currentTheme = themes[theme];
@@ -256,10 +255,9 @@ export function MerchWindow({ position, onPositionChange }) {
     // Load merch images
     const loadMerchImages = async () => {
       const images = [];
-      let i = 1;
-      for (let i = 1; ; i++) {
+      for (let j = 1; ; j++) {
         try {
-          const module = await import(`/public/merch/merch${i}.png`);
+          const module = await import(`/public/merch/merch${j}.png`);
           images.push(module.default);
         } catch (error) {
           break; // Stop when no more images are found

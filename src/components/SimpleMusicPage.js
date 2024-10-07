@@ -4,7 +4,6 @@ import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
 import EditorEffects from './EditorEffects';
 import { themes, ThemeContext } from '../themes';
-import { useNavigate } from 'react-router-dom';
 
 // Add this function at the top of the file
 function isMobileDevice() {
@@ -120,7 +119,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [showCoupon, setShowCoupon] = useState(false);
   const konamiCode = useRef([]);
   const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
-  const [isInverted, setIsInverted] = useState(Math.random() < 0.1);
+  const [isInverted] = useState(Math.random() < 0.1);
   const [theme, setTheme] = useState('default');
 
   useEffect(() => {
