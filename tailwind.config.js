@@ -19,13 +19,24 @@ module.exports = {
             '100%': { transform: 'translateX(-50%)' },
           },
           textPulse: {
-            '0%, 100%': { color: '#FF5F00' },
-            '50%': { color: '#CC4C19' },
+            '0%, 100%': { textShadow: '0 0 5px #FF5F00, 0 0 10px #FF5F00, 0 0 15px #FF5F00' },
+            '50%': { textShadow: '0 0 10px #FF5F00, 0 0 20px #FF5F00, 0 0 30px #FF5F00, 0 0 40px #FF5F00' },
+          },
+          textGlow: {
+            '0%, 100%': { 
+              textShadow: '0 0 5px #FF5F00, 0 0 10px #FF5F00, 0 0 10px #FF5F00',
+              color: '#FF5F00'
+            },
+            '50%': { 
+              textShadow: '0 0 10px #FF5F00, 0 0 10px #FF5F00, 0 0 5px #FF5F00, 0 0 15px #FF5F00',
+              color: '#FF5F00'
+            },
           },
         },
         animation: {
           'marquee': 'marquee 30s linear infinite',
-          'textPulse': 'textPulse 2s ease-in-out infinite',
+          'textPulse': 'textPulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          'textGlow': 'textGlow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         },
       },
     },

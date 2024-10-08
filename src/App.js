@@ -4,134 +4,12 @@ import CarView from './components/CarView';
 import Login from './components/Login';
 import Player from './components/Player';
 import SimpleMusicPage from './components/SimpleMusicPage';
-import MatrixRain from './components/MatrixRain';
+import { LoadingSequence } from './components/StartScreen';
 import CRTEffect from './components/CRTEffect';
+import MatrixRain from './components/MatrixRain';
 import { getAccessToken, getUserProfile } from './spotifyApi';
 import { ThemeContext } from './themes';
 import { ThemeManager } from './components/SharedComponents';
-
-function LoadingSequence({ onLoadingComplete, onMusicStart }) {
-  const [loadingStep, setLoadingStep] = useState(0);
-  const [isLoadingComplete, setIsLoadingComplete] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const loadingSteps = [
-    "Initializing system...",
-    "Loading core components...",
-    "Connecting to Spotify...",
-    "Preparing audio drivers...",
-    "Calibrating visual interface...",
-    "Optimizing playback engine...",
-    "Synchronizing playlists...",
-    "Tuning radio frequencies...",
-    "Polishing the cogs...",
-    "Adjusting gear ratios...",
-    "Lubricating sprockets...",
-    "Tightening bolts...",
-    "Aligning drive shafts...",
-    "Charging capacitors...",
-    "Priming fuel injectors...",
-    "Engaging clutch...",
-    "Revving up the engine...",
-    "Checking oil pressure...",
-    "Testing suspension...",
-    "Ready to launch!"
-  ];
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const totalDuration = 4000; // 4 seconds in milliseconds
-    const stepDuration = totalDuration / loadingSteps.length;
-    let timer;
-
-    const advanceLoading = (step) => {
-      if (step < loadingSteps.length) {
-        setLoadingStep(step);
-        timer = setTimeout(() => advanceLoading(step + 1), stepDuration);
-      } else {
-        setIsLoadingComplete(true);
-      }
-    };
-
-    advanceLoading(0);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [loadingSteps.length]);
-
-  const handleStart = () => {
-    // Immediately complete loading and advance to main screen
-    onLoadingComplete();
-
-    // Play intro sound and start music when it's done
-    const audio = new Audio(Math.random() < 0.5 ? '/cog1.mp3' : '/cog2.mp3');
-    audio.play().then(() => {
-      audio.addEventListener('ended', () => {
-        onMusicStart();
-      });
-    }).catch(error => {
-      console.error("Error playing audio:", error);
-      onMusicStart();
-    });
-  };
-
-  const progressBar = (progress) => {
-    const barLength = 20;
-    const filledLength = Math.round(progress * barLength);
-    return '[' + '='.repeat(filledLength) + ' '.repeat(barLength - filledLength) + ']';
-  };
-
-  if (!isLoadingComplete) {
-    return (
-      <CRTEffect>
-        <div className="fixed inset-0 bg-[#FF5F00] z-50 flex flex-col items-center justify-center font-receipt">
-          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
-          {!isMobile && (
-            <pre className="text-pantone-165-darker text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
-              {`
-         ___   __    _   _____ _             ____            
-        / _ \\ / /_  / | |_   _| |__   ___   / ___|___   __ _ 
-        | (_) | '_ \\ | |   | | | '_ \\ / _ \\ | |   / _ \\ / _\` |
-        \\__, | (_) || |   | | | | | |  __/ | |__| (_) | (_| |
-           /_/ \\___(_)_|   |_| |_| |_|\\___|  \\____\\___/ \\__, |
-                                                        |___/ 
-              `}
-            </pre>
-          )}
-          <div className="text-pantone-165-darker font-receipt text-xl mb-2">{progressBar((loadingStep + 1) / loadingSteps.length)}</div>
-          <div className="text-pantone-165-darker font-receipt text-xl mb-4">{Math.round(((loadingStep + 1) / loadingSteps.length) * 100)}%</div>
-          <div className="text-pantone-165-darker font-receipt text-lg">{loadingSteps[loadingStep]}</div>
-        </div>
-      </CRTEffect>
-    );
-  }
-
-  return (
-    <CRTEffect>
-      <div className="fixed inset-0 bg-[#FF5F00] z-50 font-receipt flex flex-col items-center justify-center">
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          <div className="text-pantone-165-darker text-6xl font-nickel mb-8 animate-textPulse text-shadow">96.1 The Cog</div>
-          <button 
-            className="bg-pantone-165 text-white text-shadow px-8 py-4 rounded mt-4 text-4xl font-bold hover:bg-pantone-165-darker transition-colors duration-200 relative"
-            onClick={handleStart}
-          >
-            <span className="relative z-10">Click to Start</span>
-            <div className="absolute inset-0 rounded-lg shadow-[2px_2px_0_#CC4C19,_4px_4px_0_#FF5F00] bg-pantone-165 hover:bg-pantone-165-darker transition-colors duration-200  -m-1"></div>
-          </button>
-        </div>
-        <MatrixRain />
-      </div>
-    </CRTEffect>
-  );
-}
 
 function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
   console.log('AppContent rendering', { token, isPlaying, currentSong, currentArtist, playerControls, isIntro });
@@ -287,7 +165,11 @@ function App() {
 
   if (isLoading) {
     console.log("Is loading, rendering LoadingSequence component");
-    return <LoadingSequence onLoadingComplete={handleLoadingComplete} onMusicStart={handleMusicStart} />;
+    return (
+      <div className="bg-black"> {/* Added black background */}
+        <LoadingSequence onLoadingComplete={handleLoadingComplete} onMusicStart={handleMusicStart} />
+      </div>
+    );
   }
 
   console.log("Rendering main app content");
@@ -295,7 +177,7 @@ function App() {
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <ThemeManager>
         <Router>
-          <div className="bg-[#FF5F00] min-h-screen">
+          <div className="bg-black min-h-screen"> {/* Changed to black background */}
             <AppContent 
               token={token}
               isPlaying={isPlaying}
