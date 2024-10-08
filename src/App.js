@@ -5,8 +5,6 @@ import Login from './components/Login';
 import Player from './components/Player';
 import SimpleMusicPage from './components/SimpleMusicPage';
 import { LoadingSequence } from './components/StartScreen';
-import CRTEffect from './components/CRTEffect';
-import MatrixRain from './components/MatrixRain';
 import { getAccessToken, getUserProfile } from './spotifyApi';
 import { ThemeContext } from './themes';
 import { ThemeManager } from './components/SharedComponents';
