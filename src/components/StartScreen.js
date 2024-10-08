@@ -337,6 +337,19 @@ const AnimatedButton = ({ children, onClick }) => {
   );
 };
 
+const ScaledText = styled.div`
+  font-size: 4rem; // Default size for desktop
+  white-space: nowrap;
+  max-width: 100%;
+  padding: 0 20px; // Add horizontal padding
+  overflow: visible; // Allow overflow to be visible
+  text-align: center; // Center the text
+
+  @media (max-width: 768px) {
+    font-size: 10vw; // Scale based on viewport width for mobile
+  }
+`;
+
 function SparkleText({ children }) {
   const [sparkles, setSparkles] = useState([]);
   const textRef = useRef(null);
@@ -535,12 +548,12 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
       <CRTEffect>
         <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center font-receipt">
           <SparkleText>
-            <div 
-              className="text-[#FF5F00] text-6xl font-nickel mb-8 animate-textGlow tracking-wide"
+            <ScaledText 
+              className="text-[#FF5F00] font-nickel mb-8 animate-textGlow tracking-wide"
               style={{ fontVariationSettings: '"slnt" 15, "wdth" 100' }}
             >
               96.1 The Cog
-            </div>
+            </ScaledText>
           </SparkleText>
           {!isMobile && (
             <pre className="text-[#FF5F00] text-shadow text-xl mb-4 whitespace-pre-wrap text-center">
@@ -565,14 +578,14 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   return (
     <CRTEffect>
       <div className="fixed inset-0 bg-black z-50 font-receipt flex flex-col items-center justify-center">
-        <div className="relative z-10 flex flex-col items-center justify-center">
+        <div className="relative z-10 flex flex-col items-center justify-center w-full">
           <SparkleText>
-            <div 
-              className="text-[#FF5F00] text-6xl font-nickel mb-8 animate-textGlow select-none tracking-wide"
+            <ScaledText 
+              className="text-[#FF5F00] font-nickel mb-8 animate-textGlow select-none tracking-wide"
               style={{ fontVariationSettings: '"slnt" 15, "wdth" 100' }}
             >
               96.1 The Cog
-            </div>
+            </ScaledText>
           </SparkleText>
           <AnimatedButton onClick={handleStart}>
             Click to Start
