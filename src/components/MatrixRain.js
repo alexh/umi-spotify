@@ -18,7 +18,8 @@ const MatrixRain = () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    const orangeShades = ['#FF5F00', '#FF6F00', '#FF7F00', '#FF8F00', '#FF9F00'];
+    const orangeShades = ['#FF7F00', '#FF8F00', '#bb581b', '#ff7300', '#ff7700'];
+    
     const fontSize = 14;
     const columns = Math.floor(canvas.width / fontSize);
     const drops = new Array(columns).fill(1);
@@ -60,12 +61,12 @@ const MatrixRain = () => {
     };
 
     const draw = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       englishCtx.clearRect(0, 0, englishCanvas.width, englishCanvas.height);
 
-      ctx.font = `${fontSize}px monospace`;
+      ctx.font = `bold ${fontSize}px monospace`;
       englishCtx.font = `bold ${fontSize}px monospace`;
       
       for (let i = 0; i < drops.length; i++) {
@@ -73,10 +74,9 @@ const MatrixRain = () => {
         const baseColor = orangeShades[colorIndex];
 
         if (typeof chars[i] === 'object' && chars[i].word) {
-          // Render the English word vertically
-          englishCtx.fillStyle = `rgba(255, 255, 255, ${charOpacity[i]})`;
+          englishCtx.fillStyle = `rgba(255, 255, 255, ${Math.min(charOpacity[i] * 1.5, 1)})`;
           englishCtx.shadowColor = 'white';
-          englishCtx.shadowBlur = 10;
+          englishCtx.shadowBlur = 15;
           for (let j = 0; j < chars[i].word.length; j++) {
             let displayChar = chars[i].word[j];
             if (chars[i].mutatedChars[j].frames > 0) {
@@ -85,36 +85,37 @@ const MatrixRain = () => {
             }
             englishCtx.fillText(displayChar, i * fontSize, chars[i].y + j * fontSize);
             
-            // Add mutation chance for English characters
             if (Math.random() < 0.01 && chars[i].mutatedChars[j].frames === 0) {
               chars[i].mutatedChars[j] = { char: chars[i].word[j], frames: mutationSequence.length };
             }
           }
           englishCtx.shadowBlur = 0;
           
-          chars[i].y += 1.5; // Increased speed for English words
+          chars[i].y += 1.5;
           
-          // Reset only when the word has fully moved off the screen
+          // Reset only when the entire word has moved off the screen
           if (chars[i].y > canvas.height + chars[i].word.length * fontSize) {
             chars[i] = getRandomChar();
             charOpacity[i] = 1;
           }
         } else {
           ctx.shadowColor = baseColor;
-          ctx.shadowBlur = 10;
-          ctx.fillStyle = `rgba(${parseInt(baseColor.slice(1, 3), 16)}, ${parseInt(baseColor.slice(3, 5), 16)}, ${parseInt(baseColor.slice(5, 7), 16)}, ${charOpacity[i]})`;
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = `rgba(${Math.min(parseInt(baseColor.slice(1, 3), 16) + 50, 255)}, 
+                                 ${Math.min(parseInt(baseColor.slice(3, 5), 16) + 50, 255)}, 
+                                 ${Math.min(parseInt(baseColor.slice(5, 7), 16) + 50, 255)}, 
+                                 ${Math.min(charOpacity[i] * 1.5, 1)})`;
           
           let displayChar = mutateChar(chars[i]);
           ctx.fillText(displayChar, i * fontSize, drops[i] * fontSize);
           ctx.shadowBlur = 0;
 
-          // Add mutation chance for Japanese characters
           if (Math.random() < 0.7) {
             chars[i] = { char: getRandomJapaneseChar() };
           }
         }
 
-        charOpacity[i] *= 0.99;
+        charOpacity[i] *= 0.995;
 
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.99) {
           drops[i] = 0;
@@ -136,7 +137,7 @@ const MatrixRain = () => {
 
   return (
     <>
-      <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
+      <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />
       <canvas ref={englishCanvasRef} className="absolute top-0 left-0 w-full h-full" style={{ mixBlendMode: 'lighten' }} />
     </>
   );

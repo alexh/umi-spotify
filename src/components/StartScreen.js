@@ -422,6 +422,11 @@ function SparkleText({ children }) {
   );
 }
 
+const StyledMatrixRain = styled(MatrixRain)`
+  opacity: 0.5;  // Adjust this value to make it less bright
+  mix-blend-mode: overlay;  // This blend mode can help integrate it better with the background
+`;
+
 function LoadingSequence({ onLoadingComplete, onMusicStart }) {
   const [loadingStep, setLoadingStep] = useState(0);
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
@@ -591,7 +596,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
             Click to Start
           </AnimatedButton>
         </div>
-        <MatrixRain />
+        <StyledMatrixRain />
         <button 
           onClick={toggleAudio} 
           className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-[#FF5F00] hover:text-[#FF8F40] transition-colors duration-300 z-50"

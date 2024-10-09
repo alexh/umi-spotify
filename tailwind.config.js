@@ -8,6 +8,7 @@ module.exports = {
           'pantone-165': '#FF5F00',
           'pantone-165-dark': '#CC4C19',
           'pantone-165-darker': '#963b18',
+          'pantone-165-darkest': '#341509',
         },
         fontFamily: {
           'nickel': ['nickel-gothic-variable', 'sans-serif'],

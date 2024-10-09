@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
+import MatrixRain from './MatrixRain';
+import CRTEffect from './CRTEffect';
+import NutsAndBolts from './NutsAndBolts';
 
 const Login = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,25 +31,31 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-pantone-165 text-pantone-165-darker font-receipt p-4 overflow-auto">
-      <div className="text-center bg-pantone-165-darker border-4 border-pantone-165 p-4 sm:p-8 rounded-lg shadow-lg mx-auto w-full max-w-md retro-box">
-        <h1 className="text-4xl sm:text-6xl font-nickel mb-4 sm:mb-8 text-pantone-165">96.1 The Cog</h1>
-        <div className="bg-pantone-165 text-pantone-165-darker p-2 mb-4 rounded text-left">
-          {steps.map((step, index) => (
-            <p key={index} className={`mb-2 ${index <= currentStep ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}>
-              <span className="blink">{'>'}</span> {step}
-            </p>
-          ))}
+    <CRTEffect>
+      <div className="relative min-h-screen w-full overflow-hidden">
+        <MatrixRain />
+        <NutsAndBolts />
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-pantone-165-darkest bg-opacity-80 text-pantone-165 font-receipt p-4 overflow-auto" style={{ zIndex: 2 }}>
+          <div className="text-center bg-pantone-165-darker bg-opacity-90 border-4 border-pantone-165 p-4 sm:p-8 rounded-lg shadow-lg mx-auto w-full max-w-md retro-box">
+            <h1 className="text-3xl sm:text-5xl font-nickel mb-4 sm:mb-8 text-pantone-165 whitespace-nowrap">96.1 The Cog</h1>
+            <div className="bg-pantone-165 bg-opacity-90 text-pantone-165-darker p-2 mb-4 rounded text-left">
+              {steps.map((step, index) => (
+                <p key={index} className={`mb-2 ${index <= currentStep ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}>
+                  <span className="blink">{'>'}</span> {step}
+                </p>
+              ))}
+            </div>
+            <button 
+              onClick={handleLogin} 
+              className="bg-pantone-165 bg-opacity-90 text-pantone-165-darker px-6 py-3 rounded text-lg transition-colors duration-300 hover:bg-pantone-165-darker hover:text-pantone-165 w-full retro-shadow"
+              disabled={currentStep !== steps.length - 1}
+            >
+              LOGIN
+            </button>
+          </div>
         </div>
-        <button 
-          onClick={handleLogin} 
-          className="bg-pantone-165 text-pantone-165-darker px-6 py-3 rounded text-lg transition-colors duration-300 hover:bg-pantone-165-darker hover:text-pantone-165 w-full retro-shadow"
-          disabled={currentStep !== steps.length - 1}
-        >
-          LOGIN
-        </button>
       </div>
-    </div>
+    </CRTEffect>
   );
 };
 
