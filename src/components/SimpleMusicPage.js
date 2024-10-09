@@ -119,7 +119,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const [showCoupon, setShowCoupon] = useState(false);
   const konamiCode = useRef([]);
   const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
-  const [isInverted] = useState(Math.random() < 0.1);
+  const [isInverted] = useState(false);
   const [theme, setTheme] = useState('default');
 
   useEffect(() => {

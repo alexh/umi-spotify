@@ -113,7 +113,7 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   );
 }
 
-export function NowPlayingOverlay({ currentSong, artist, score, _isMobile, trackUrl }) {
+export function NowPlayingOverlay({ currentSong, artist, score, _isMobile, trackUrl, city }) {
   const [localIsMobile, setLocalIsMobile] = useState(isMobileDevice());
   const { theme } = useContext(ThemeContext);
   const currentTheme = themes[theme];
@@ -132,48 +132,45 @@ export function NowPlayingOverlay({ currentSong, artist, score, _isMobile, track
   return currentSong && (
     <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 font-receipt p-2" style={{ color: currentTheme.text }}>
       <div className="border-2 p-2 flex items-center" style={{ borderColor: currentTheme.secondary }}>
-        {!localIsMobile && <div className="text-xl whitespace-nowrap pr-4">Score: {score || 0}</div>}
+        {!localIsMobile && <div className="text-xl whitespace-nowrap pr-4" style={{ userSelect: 'none' }}>Score: {score || 0}</div>}
         <div className="flex-grow overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
-              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
-              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
-              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
-              <span className="mx-8 animate-color-shift" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
+            {[...Array(10)].map((_, index) => (
+              <span key={index} className="inline-flex items-center mr-8">
+                <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
+                <a 
+                  href={trackUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="animate-color-shift hover:underline cursor-pointer" 
+                  style={{ color: currentTheme.primary }}
+                >
+                  {marqueeText}
+                </a>
+              </span>
+            ))}
           </div>
-          <div className="inline-block animate-marquee" aria-hidden="true">
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
-            <a href={trackUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-              <img src="/spotify.png" alt="Spotify Logo" className="h-4 mx-2" />
-              <span className="mx-8" style={{ color: currentTheme.primary }}>{marqueeText}</span>
-            </a>
+          <div className="inline-block animate-marquee2" aria-hidden="true">
+            {[...Array(10)].map((_, index) => (
+              <span key={index} className="inline-flex items-center mr-8">
+                <img src="/spotify.png" alt="Spotify Logo" className="h-4 mr-2 spotify-logo-filter animate-pulse" style={{ filter: `brightness(0) saturate(100%) invert(${currentTheme.text === '#000000' ? '0' : '100'}%)` }} />
+                <a 
+                  href={trackUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="animate-color-shift hover:underline cursor-pointer" 
+                  style={{ color: currentTheme.primary }}
+                >
+                  {marqueeText}
+                </a>
+              </span>
+            ))}
           </div>
         </div>
         {!localIsMobile && (
           <div className="text-xl whitespace-nowrap pl-4">
-            <a href="https://utility.materials.nyc" style={{ color: currentTheme.secondary }}>Utility Materials Inc.</a>
+            <span style={{ color: currentTheme.secondary, userSelect: 'none' }}>{city} |</span>
+            <a href="https://utility.materials.nyc" className="hover:underline cursor-pointer" style={{ color: currentTheme.secondary }}> Utility Materials Inc.</a>
           </div>
         )}
       </div>

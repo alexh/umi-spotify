@@ -8,9 +8,10 @@ import { LoadingSequence } from './components/StartScreen';
 import { getAccessToken, getUserProfile } from './spotifyApi';
 import { ThemeContext } from './themes';
 import { ThemeManager } from './components/SharedComponents';
+import { NowPlayingOverlay } from './components/SharedComponents';
+import { fetchCityName } from './utils/locationUtils'; // Import the fetchCityName function
 
 function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
-  console.log('AppContent rendering', { token, isPlaying, currentSong, currentArtist, playerControls, isIntro });
 
   return (
     <Routes>
@@ -58,6 +59,7 @@ function App() {
   const playerControlsRef = useRef(playerControls);
   const [isIntro, setIsIntro] = useState(true);
   const [theme, setTheme] = useState('default');
+  const [city, setCity] = useState('');
 
   const handleLogout = useCallback(() => {
     console.log("Logging out");
@@ -152,6 +154,20 @@ function App() {
     console.log("App render - Token:", token ? "Token exists" : "No token", "IsLoading:", isLoading, "IsInitializing:", isInitializing);
   }, [token, isLoading, isInitializing]);
 
+  useEffect(() => {
+    const getCityName = async () => {
+      try {
+        const cityName = await fetchCityName();
+        setCity(cityName);
+      } catch (error) {
+        console.error('Error fetching city name:', error);
+        setCity('Your City'); // Fallback if fetch fails
+      }
+    };
+
+    getCityName();
+  }, []);
+
   if (isInitializing) {
     return <div>Initializing...</div>;
   }
@@ -190,6 +206,13 @@ function App() {
               isPlaying={isPlaying}
               onPlaybackStateChange={handlePlaybackStateChange}
               setPlayerControls={setPlayerControlsMemoized}
+            />
+            <NowPlayingOverlay
+              currentSong={currentSong}
+              artist={currentArtist}
+              score={0} // Assuming score is not used here
+              trackUrl={currentSong?.external_urls?.spotify}
+              city={city} // Pass the city state here
             />
           </div>
         </Router>

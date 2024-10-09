@@ -51,4 +51,15 @@ module.exports = {
         addUtilities(newUtilities, ['responsive', 'hover'])
       }
     ],
+    purge: {
+      content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
+      options: {
+        safelist: [
+          'opacity-0',
+          'opacity-100',
+          'transition-opacity',
+          'duration-500',
+        ],
+      },
+    },
   }
