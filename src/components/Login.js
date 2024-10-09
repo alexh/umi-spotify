@@ -48,7 +48,7 @@ const Login = () => {
         <NutsAndBolts />
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-pantone-165-darkest bg-opacity-80 text-pantone-165 font-receipt p-4 overflow-auto" style={{ zIndex: 2 }}>
           <div className="text-center bg-pantone-165-darker bg-opacity-90 border-4 border-pantone-165 p-4 sm:p-8 rounded-lg shadow-lg mx-auto w-full max-w-xl retro-box">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-nickel mb-2 sm:mb-4 text-pantone-165 whitespace-nowrap">96.1 The Cog</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-nickel mb-2 sm:mb-4 text-pantone-165 whitespace-nowrap" style={{ fontVariationSettings: '"slnt" 15, "wdth" 100' }}>96.1 The Cog</h1>
             <LocalRadioText />
             <div className="bg-pantone-165 bg-opacity-90 text-pantone-165-darker p-2 mb-4 rounded text-left min-h-[4rem] flex flex-col justify-center">
               {steps.map((step, index) => (

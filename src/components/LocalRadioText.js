@@ -1,45 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { fetchCityName } from '../utils/locationUtils';
 
-const US_CITIES = [
-  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia',
-  'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville',
-  'Fort Worth', 'Columbus', 'San Francisco', 'Charlotte', 'Indianapolis',
-  'Seattle', 'Denver', 'Washington', 'Boston', 'Nashville', 'El Paso',
-  'Detroit', 'Memphis', 'Portland', 'Oklahoma City', 'Las Vegas', 'Louisville'
+const cities = [
+  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix',
+  'Boise', 'Fargo', 'Omaha', 'Tulsa', 'Reno',
+  'Spokane', 'Bozeman', 'Missoula', 'Duluth', 'Sioux Falls',
+  'Asheville', 'Burlington', 'Portland', 'Eugene', 'Bend',
+  'Santa Fe', 'Taos', 'Sedona', 'Flagstaff', 'Moab', 'Boulder'
 ];
 
 const LocalRadioText = () => {
-  const [cityName, setCityName] = useState('');
+  const [displayCity, setDisplayCity] = useState('');
 
   useEffect(() => {
-    let intervalId;
-    
-    const fetchRealCityName = async () => {
-      const realCityName = await fetchCityName();
-      if (realCityName) {
-        setCityName(realCityName);
-        clearInterval(intervalId);
-      }
+    const fetchCity = async () => {
+      const city = await fetchCityName();
+
+      let count = 0;
+      const interval = setInterval(() => {
+        if (count < 20) {
+          setDisplayCity(cities[Math.floor(Math.random() * cities.length)]);
+          count++;
+        } else {
+          setDisplayCity(city);
+          clearInterval(interval);
+        }
+      }, 100);
+
+      return () => clearInterval(interval);
     };
 
-    const getRandomCity = () => {
-      const randomIndex = Math.floor(Math.random() * US_CITIES.length);
-      setCityName(US_CITIES[randomIndex]);
-    };
-
-    getRandomCity(); // Set initial random city
-    intervalId = setInterval(getRandomCity, 1); // Change city every 150ms
-
-    fetchRealCityName();
-
-    return () => clearInterval(intervalId);
+    fetchCity();
   }, []);
 
   return (
-    <div className="text-xl font-bold mb-4">
-      Local {cityName} Radio
-    </div>
+    <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4">
+      Broadcasting <span className="animate-pulse">LIVE</span> from <span className="font-bold">{displayCity}</span>
+    </p>
   );
 };
 
