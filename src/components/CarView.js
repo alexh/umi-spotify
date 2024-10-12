@@ -98,7 +98,7 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
   const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
-    loadModelWithRetry('/models/Flying_Car-.gltf')
+    loadModelWithRetry('/models/Flying_Car-.gltf', () => {})
       .then((gltf) => {
         setModel(gltf.scene);
         setLoadError(null);
