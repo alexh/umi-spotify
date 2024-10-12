@@ -13,7 +13,7 @@ all: install start
 .PHONY: install
 install:
 	@echo "Installing dependencies..."
-	@$(NPM) install
+	@npm install
 
 # Start development server
 .PHONY: start
@@ -23,9 +23,9 @@ start:
 
 # Build the project
 .PHONY: build
-build:
+build: install
 	@echo "Building the project..."
-	@$(NPM) run build
+	@npm run build
 
 # Run tests
 .PHONY: test
