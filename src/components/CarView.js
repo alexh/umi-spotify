@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense, useContext } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Text, useGLTF, Box } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Text, Box } from '@react-three/drei';
 import { EffectComposer, Bloom, Pixelation } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -11,7 +11,6 @@ import { debounce } from 'lodash';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow, ViewSwitcher, ThemeSelector } from './SharedComponents';
 import CRTEffect from './CRTEffect';
 import { themes, ThemeContext } from '../themes';
-import { useNavigate } from 'react-router-dom';
 
 // ... (keep other imports)
 
@@ -97,106 +96,21 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
   const [loadError, setLoadError] = useState(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const modelRef = useRef();
-  const [carTurnAngle, setCarTurnAngle] = useState(0);
-  const targetTurnAngle = useRef(0);
   const { theme } = useContext(ThemeContext);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     loadModelWithRetry('/models/Flying_Car-.gltf', setLoadProgress)
       .then((gltf) => {
-        if (mountedRef.current) {
-          setModel(gltf.scene);
-          setLoadError(null);
-        }
+        setModel(gltf.scene);
+        setLoadError(null);
       })
       .catch((error) => {
         console.error('Final error loading model:', error);
-        if (mountedRef.current) {
-          setLoadError("Failed to load car model. Using fallback.");
-        }
+        setLoadError("Failed to load car model. Using fallback.");
       });
   }, []);
 
-  useEffect(() => {
-    if (model && mountedRef.current) {
-      console.log("Updating car model with theme:", theme);
-      model.traverse((child) => {
-        if (child.isMesh) {
-          if (child.name === "Windshield" || child.name.toLowerCase().includes('glass')) {
-            child.material = new THREE.MeshPhysicalMaterial({
-              transparent: true,
-              opacity: 0.3,
-              side: THREE.DoubleSide,
-              clearcoat: 1,
-              clearcoatRoughness: 0,
-              metalness: 0.1,
-              roughness: 0.1,
-            });
-          } else {
-            if (!child.material.isMeshStandardMaterial) {
-              child.material = new THREE.MeshStandardMaterial();
-            }
-            child.material.color.set(themes[theme].primary);
-            child.material.metalness = 0.5;
-            child.material.roughness = 0.5;
-            child.material.needsUpdate = true;
-          }
-        }
-      });
-    }
-  }, [model, theme]);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      switch (event.key) {
-        case 'ArrowLeft':
-          targetTurnAngle.current = 0.1;
-          break;
-        case 'ArrowRight':
-          targetTurnAngle.current = -0.1;
-          break;
-        default:
-          break;
-      }
-    };
-
-    const handleKeyUp = (event) => {
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        targetTurnAngle.current = 0;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-
-  useFrame((state, _delta) => {
-    if (modelRef.current) {
-      // Smooth car turning
-      const turnDifference = targetTurnAngle.current - carTurnAngle;
-      setCarTurnAngle(prev => prev + turnDifference * 0.1);
-
-      modelRef.current.position.y = -1.70 + Math.sin(state.clock.elapsedTime * 0.5) * 0.05;
-      modelRef.current.rotation.y = carTurnAngle + Math.sin(state.clock.elapsedTime * 0.3) * 0.01;
-      
-      // Add slight roll when turning
-      modelRef.current.rotation.z = -carTurnAngle * 0.2;
-    }
-  });
-
-  if (loadError) {
+  if (loadError || !model) {
     console.log('Rendering fallback model');
     return <Box args={[2, 1, 3]} material-color={themes[theme].primary} />;
   }
@@ -351,19 +265,9 @@ function Dust({ count, size, speed, color }) {
 
 function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
   const { theme } = useContext(ThemeContext);
-  const [sceneReady, setSceneReady] = useState(false);
-
-  useEffect(() => {
-    // We'll consider the scene ready immediately, as the CarModel component will handle its own loading
-    setSceneReady(true);
-  }, []);
-
-  useEffect(() => {
-    console.log("Scene rendered with dust parameters:", { dustSize, dustCount, dustSpeed });
-  }, [dustSize, dustCount, dustSpeed]);
 
   return (
-    <Suspense fallback={<Text color="white" fontSize={0.5} position={[0, 1, 0]}>Loading scene components...</Text>}>
+    <Suspense fallback={<Box args={[1, 1, 1]} material-color={themes[theme].primary} />}>
       <ambientLight intensity={0.5} color={new THREE.Color(themes[theme].primary)} />
       <directionalLight position={[5, 5, 5]} intensity={1} color={new THREE.Color(themes[theme].primary)} />
       <directionalLight position={[-5, 5, 5]} intensity={0.5} color={new THREE.Color(themes[theme].secondary)} />
@@ -454,27 +358,21 @@ function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevi
   });
 
   return (
-    <Scene 
-      token={token}
-      currentSong={currentSong}
-      orbitControlsRef={orbitControlsRef}
-      pixelSize={pixelSize}
-      dustSize={dustSize}
-      dustCount={dustCount}
-      dustSpeed={currentDustSpeed}
-      isInteractingWithUI={isInteractingWithUI}
-    >
-      <PerspectiveCamera makeDefault fov={currentFov} />
-      <CameraController zoom={zoom} fov={currentFov} carTurnAngle={carTurnAngle} viewMode={viewMode} />
-      <CarModel 
+    <>
+      <Scene 
         token={token}
         currentSong={currentSong}
-        isPlaying={isPlaying}
-        onPlayPause={onPlayPause}
-        onNext={onNext}
-        onPrevious={onPrevious}
-      />
-    </Scene>
+        orbitControlsRef={orbitControlsRef}
+        pixelSize={pixelSize}
+        dustSize={dustSize}
+        dustCount={dustCount}
+        dustSpeed={currentDustSpeed}
+        isInteractingWithUI={isInteractingWithUI}
+      >
+        <PerspectiveCamera makeDefault fov={currentFov} />
+        <CameraController zoom={zoom} fov={currentFov} carTurnAngle={carTurnAngle} viewMode={viewMode} />
+      </Scene>
+    </>
   );
 }
 
@@ -633,6 +531,7 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
               </Suspense>
             </Canvas>
           </div>
+          
           
           <div className="absolute inset-0 z-20 pointer-events-none">
             <NowPlayingOverlay currentSong={currentSong} artist={currentArtist} />

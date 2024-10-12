@@ -4,6 +4,7 @@ import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
 import EditorEffects from './EditorEffects';
 import { themes, ThemeContext } from '../themes';
+import LightningOverlay from './LightingOverlay';
 
 // Add this function at the top of the file
 function isMobileDevice() {
@@ -288,6 +289,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
             {renderWindows()}
           </div>
         </div>
+        {isIntro && <LightningOverlay />}
       </CRTEffect>
     </ThemeContext.Provider>
   );
