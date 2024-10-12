@@ -86,18 +86,6 @@ function App() {
   const [sdkReady, setSdkReady] = useState(false);
   const attemptedAutoplayRef = useRef(false);
 
-  const handleLogout = useCallback(() => {
-    console.log("Logging out");
-    localStorage.removeItem('spotify_access_token');
-    setToken(null);
-  }, []);
-
-  const handleLoadingComplete = useCallback(() => {
-    console.log("Loading sequence completed");
-    setIsLoading(false);
-    attemptAutoplay();
-  }, [attemptAutoplay]);
-
   const attemptAutoplay = useCallback(() => {
     if (sdkReady && !isLoading && !attemptedAutoplayRef.current) {
       console.log("Attempting autoplay");
@@ -105,6 +93,18 @@ function App() {
       playerControlsRef.current.togglePlay();
     }
   }, [sdkReady, isLoading]);
+
+  const handleLoadingComplete = useCallback(() => {
+    console.log("Loading sequence completed");
+    setIsLoading(false);
+    attemptAutoplay();
+  }, [attemptAutoplay]);
+
+  const handleLogout = useCallback(() => {
+    console.log("Logging out");
+    localStorage.removeItem('spotify_access_token');
+    setToken(null);
+  }, []);
 
   const handleMusicStart = useCallback(() => {
     console.log("Music start triggered");

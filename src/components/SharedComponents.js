@@ -203,70 +203,29 @@ export function NowPlayingOverlay({ currentSong, artist, score, _isMobile, track
   );
 }
 
-export function OrangeSlider({ value, onChange, min = 0, max = 100 }) {
-  const { theme } = useContext(ThemeContext);
-  const [isDragging, setIsDragging] = useState(false);
-  const sliderRef = useRef(null);
+export const OrangeSlider = ({ value, onChange, min = 0, max = 100 }) => {
+  const [localValue, setLocalValue] = useState(value);
 
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    updateValue(e);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = useCallback((e) => {
-    if (isDragging) {
-      updateValue(e);
-    }
-  }, [isDragging, updateValue]);
-
-  const updateValue = useCallback((e) => {
-    const slider = sliderRef.current;
-    const rect = slider.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(1, x / rect.width));
-    const newValue = Math.round(percentage * (max - min) + min);
+  const updateValue = useCallback((newValue) => {
+    setLocalValue(newValue);
     onChange(newValue);
-  }, [max, min, onChange]);
+  }, [onChange]);
 
   useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseMove]);
-
-  const percentage = ((value - min) / (max - min)) * 100;
+    setLocalValue(value);
+  }, [value]);
 
   return (
-    <div 
-      ref={sliderRef}
-      className="relative w-full h-4 cursor-pointer"
-      onMouseDown={handleMouseDown}
-      style={{ backgroundColor: themes[theme].secondary + '4D' }} // 30% opacity
-    >
-      <div 
-        className="absolute top-0 left-0 h-full"
-        style={{ width: `${percentage}%`, backgroundColor: themes[theme].primary }}
-      />
-      <div 
-        className="absolute top-0 w-4 h-4 -mt-0.5 -ml-2 z-20"
-        style={{ 
-          left: `${percentage}%`, 
-          backgroundColor: themes[theme].primary,
-          borderColor: themes[theme].secondary,
-          border: '2px solid',
-          borderRadius: '2px'
-        }}
-      />
-    </div>
+    <input
+      type="range"
+      min={min}
+      max={max}
+      value={localValue}
+      onChange={(e) => updateValue(Number(e.target.value))}
+      className="slider orange-slider"
+    />
   );
-}
+};
 
 export function MerchWindow({ position, onPositionChange }) {
   const { theme } = useContext(ThemeContext);
