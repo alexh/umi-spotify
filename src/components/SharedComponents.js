@@ -61,11 +61,36 @@ export function RetroWindow({ title, children, position, onPositionChange }) {
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(isMobileDevice());
+      if (windowRef.current) {
+        const windowRect = windowRef.current.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let newX = localPosition.x;
+        let newY = localPosition.y;
+
+        if (newX + windowRect.width > viewportWidth) {
+          newX = viewportWidth - windowRect.width;
+        }
+        if (newY + windowRect.height > viewportHeight) {
+          newY = viewportHeight - windowRect.height;
+        }
+
+        if (newX < 0) newX = 0;
+        if (newY < 0) newY = 0;
+
+        if (newX !== localPosition.x || newY !== localPosition.y) {
+          setLocalPosition({ x: newX, y: newY });
+          if (onPositionChange) {
+            onPositionChange({ x: newX, y: newY });
+          }
+        }
+      }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [localPosition, onPositionChange]);
 
   const windowStyle = isMobile
     ? { width: '100%', maxWidth: '300px' }
@@ -248,6 +273,7 @@ export function MerchWindow({ position, onPositionChange }) {
   const { theme } = useContext(ThemeContext);
   const [currentMerchIndex, setCurrentMerchIndex] = useState(0);
   const [merchImages, setMerchImages] = useState([]);
+  const [windowSize, setWindowSize] = useState({ width: '100px', height: '200px' });
 
   useEffect(() => {
     // Load merch images
@@ -275,6 +301,31 @@ export function MerchWindow({ position, onPositionChange }) {
     return () => clearInterval(interval);
   }, [merchImages.length]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      
+      let width, height;
+      if (vw < 640) { // Small screens
+        width = '180px';
+        height = '360px';
+      } else if (vw < 1024) { // Medium screens
+        width = '100px';
+        height = '300px';
+      } else { // Large screens
+        width = '200px';
+        height = '400px';
+      }
+      
+      setWindowSize({ width, height });
+    };
+
+    handleResize(); // Call once to set initial size
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handlePrevious = () => {
     setCurrentMerchIndex((prevIndex) => (prevIndex - 1 + merchImages.length) % merchImages.length);
   };
@@ -285,8 +336,8 @@ export function MerchWindow({ position, onPositionChange }) {
 
   return (
     <RetroWindow title="Merch" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center" style={{ width: '200px', height: '400px' }}>
-        <div style={{ width: '100%', height: '400px', overflow: 'hidden' }}>
+      <div className="flex flex-col items-center" style={{ width: windowSize.width, height: windowSize.height }}>
+        <div style={{ width: '100%', height: '80%', overflow: 'hidden' }}>
           {merchImages.length > 0 && (
             <img 
               src={merchImages[currentMerchIndex]} 
@@ -299,14 +350,14 @@ export function MerchWindow({ position, onPositionChange }) {
           <button 
             onClick={handlePrevious}
             style={{ backgroundColor: themes[theme].secondary, color: themes[theme].text }}
-            className="px-2 py-1 rounded transition-colors"
+            className="px-2 py-1 rounded transition-colors text-sm"
           >
             Prev
           </button>
           <button 
             onClick={handleNext}
             style={{ backgroundColor: themes[theme].secondary, color: themes[theme].text }}
-            className="px-2 py-1 rounded transition-colors"
+            className="px-2 py-1 rounded transition-colors text-sm"
           >
             Next
           </button>
@@ -316,7 +367,7 @@ export function MerchWindow({ position, onPositionChange }) {
           target="_blank" 
           rel="noopener noreferrer"
           style={{ backgroundColor: themes[theme].secondary, color: themes[theme].text }}
-          className="px-4 py-2 mt-2 rounded transition-colors w-full text-center"
+          className="px-4 py-2 mt-2 rounded transition-colors w-full text-center text-sm"
         >
           Buy Now
         </a>

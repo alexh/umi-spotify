@@ -380,6 +380,7 @@ function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, 
   const textSceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
+  const composerRef = useRef(null);
   const meshRef = useRef(null);
   const animationFrameRef = useRef(null);
   const isPlayingRef = useRef(isPlaying);
@@ -390,7 +391,7 @@ function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, 
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
-    targetRotationRef.current.y = isPlaying ? Math.PI : 0; // Flip 180 degrees when playing starts/stops
+    targetRotationRef.current.y = isPlaying ? Math.PI : 0;
   }, [isPlaying]);
 
   useEffect(() => {
@@ -472,12 +473,29 @@ function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, 
     pixelPass.uniforms["pixelSize"].value = 1;
     composer.addPass(pixelPass);
 
+    composerRef.current = composer;
+
     if (!isMobile) {
       const fontLoader = new FontLoader();
       fontLoader.load('/Receipt_Narrow_Regular.json', (loadedFont) => {
         setFont(loadedFont);
       });
     }
+
+    const handleResize = () => {
+      const newWidth = mountRef.current.clientWidth;
+      const newHeight = mountRef.current.clientHeight;
+
+      camera.aspect = newWidth / newHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(newWidth, newHeight);
+      composer.setSize(newWidth, newHeight);
+
+      pixelPass.uniforms["resolution"].value.set(newWidth, newHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
 
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
@@ -528,6 +546,7 @@ function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, 
     animate();
 
     return () => {
+      window.removeEventListener('resize', handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
