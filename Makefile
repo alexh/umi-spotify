@@ -47,10 +47,10 @@ clean:
 	@rm -rf node_modules
 
 lint:
-	npm run lint
+	npx eslint src/**/*.js
 
 lint-fix:
-	npm run lint -- --fix
+	npx eslint src/**/*.js --fix
 
 # Help command to list available targets
 .PHONY: help
