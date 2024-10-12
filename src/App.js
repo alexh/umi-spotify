@@ -1,46 +1,69 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import CarView from './components/CarView';
 import Login from './components/Login';
 import Player from './components/Player';
 import SimpleMusicPage from './components/SimpleMusicPage';
 import { LoadingSequence } from './components/StartScreen';
 import { getAccessToken, getUserProfile } from './spotifyApi';
-import { ThemeContext } from './themes';
+import { ThemeContext, themes } from './themes';
 import { ThemeManager } from './components/SharedComponents';
 import { NowPlayingOverlay } from './components/SharedComponents';
 import { fetchCityName } from './utils/locationUtils'; // Import the fetchCityName function
 
-function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
+function AppContent({ token, isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro, theme, setTheme }) {
+  const [fadeOut, setFadeOut] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleViewSwitch = useCallback(() => {
+    setFadeOut(true);
+    setTimeout(() => {
+      if (location.pathname === '/car') {
+        navigate('/visualizer');
+      } else {
+        navigate('/car');
+      }
+      setFadeOut(false);
+    }, 500); // Adjust this timing to match your CSS transition
+  }, [navigate, location.pathname]);
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/simple" replace />} />
-      <Route path="/car" element={
-        <CarView 
-          token={token}
-          isPlaying={isPlaying}
-          onPlayPause={playerControls.togglePlay}
-          onNext={playerControls.nextTrack}
-          onPrevious={playerControls.previousTrack}
-          currentSong={currentSong}
-          currentArtist={currentArtist}
-          onLogout={onLogout}
-          playerControls={playerControls}
-        />
-      } />
-      <Route path="/visualizer" element={
-        <SimpleMusicPage 
-          isPlaying={isPlaying}
-          currentSong={currentSong}
-          currentArtist={currentArtist}
-          playerControls={playerControls}
-          onLogout={onLogout}
-          isIntro={isIntro}
-        />
-      } />
-      <Route path="*" element={<Navigate to="/visualizer" replace />} />
-    </Routes>
+    <div className={`transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/visualizer" replace />} />
+        <Route path="/car" element={
+          <CarView 
+            token={token}
+            isPlaying={isPlaying}
+            onPlayPause={playerControls.togglePlay}
+            onNext={playerControls.nextTrack}
+            onPrevious={playerControls.previousTrack}
+            currentSong={currentSong}
+            currentArtist={currentArtist}
+            onLogout={onLogout}
+            playerControls={playerControls}
+            onSwitchView={handleViewSwitch}
+            theme={theme}
+            setTheme={setTheme}
+          />
+        } />
+        <Route path="/visualizer" element={
+          <SimpleMusicPage 
+            isPlaying={isPlaying}
+            currentSong={currentSong}
+            currentArtist={currentArtist}
+            playerControls={playerControls}
+            onLogout={onLogout}
+            isIntro={isIntro}
+            onSwitchView={handleViewSwitch}
+            theme={theme}
+            setTheme={setTheme}
+          />
+        } />
+        <Route path="*" element={<Navigate to="/visualizer" replace />} />
+      </Routes>
+    </div>
   );
 }
 
@@ -49,7 +72,6 @@ function App() {
   const [currentSong, setCurrentSong] = useState("");
   const [currentArtist, setCurrentArtist] = useState("");
   const [token, setToken] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
   const [playerControls, setPlayerControls] = useState({
     togglePlay: () => console.log("Toggle play not yet initialized"),
@@ -59,7 +81,10 @@ function App() {
   const playerControlsRef = useRef(playerControls);
   const [isIntro, setIsIntro] = useState(true);
   const [theme, setTheme] = useState('default');
-  const [city, setCity] = useState('');
+  const [cityName, setCityName] = useState('Your City'); // Updated to display a default city name
+  const [isLoading, setIsLoading] = useState(true);
+  const [sdkReady, setSdkReady] = useState(false);
+  const attemptedAutoplayRef = useRef(false);
 
   const handleLogout = useCallback(() => {
     console.log("Logging out");
@@ -70,19 +95,23 @@ function App() {
   const handleLoadingComplete = useCallback(() => {
     console.log("Loading sequence completed");
     setIsLoading(false);
+    attemptAutoplay();
   }, []);
+
+  const attemptAutoplay = useCallback(() => {
+    if (sdkReady && !isLoading && !attemptedAutoplayRef.current) {
+      console.log("Attempting autoplay");
+      attemptedAutoplayRef.current = true;
+      playerControlsRef.current.togglePlay();
+    }
+  }, [sdkReady, isLoading]);
 
   const handleMusicStart = useCallback(() => {
     console.log("Music start triggered");
-    // if (playerControlsRef.current && playerControlsRef.current.togglePlay) {
-    //   playerControlsRef.current.togglePlay();
-    // } else {
-    //   console.error("Player controls not available for music start");
-    // }
-    // // Set a timeout to end the intro after the video has played twice (assuming the video is about 15 seconds long)
+    // Set a timeout to end the intro after a short delay
     setTimeout(() => {
       setIsIntro(false);
-    }, 2000); // 30 seconds for two loops
+    }, 2000);
   }, []);
 
   const handlePlaybackStateChange = useCallback((state) => {
@@ -96,7 +125,9 @@ function App() {
     console.log("Setting player controls:", controls);
     setPlayerControls(controls);
     playerControlsRef.current = controls;
-  }, []);
+    setSdkReady(true);
+    attemptAutoplay();
+  }, [attemptAutoplay]);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -131,6 +162,7 @@ function App() {
           await getUserProfile(fetchedToken);
           console.log("Token validated successfully");
           setToken(fetchedToken);
+          setIsLoading(true); // Set loading to true when token is valid
         } catch (error) {
           console.error("Token validation failed:", error);
           localStorage.removeItem('spotify_access_token');
@@ -151,26 +183,26 @@ function App() {
   }, [playerControls]);
 
   useEffect(() => {
-    console.log("App render - Token:", token ? "Token exists" : "No token", "IsLoading:", isLoading, "IsInitializing:", isInitializing);
-  }, [token, isLoading, isInitializing]);
+    console.log("App render - Token:", token ? "Token exists" : "No token", "IsInitializing:", isInitializing);
+  }, [token, isInitializing]);
 
   useEffect(() => {
     const getCityName = async () => {
       try {
-        const cityName = await fetchCityName();
-        setCity(cityName);
+        const city = await fetchCityName();
+        setCityName(city || 'Your City');
       } catch (error) {
         console.error('Error fetching city name:', error);
-        setCity('Your City'); // Fallback if fetch fails
+        setCityName('Your City');
       }
     };
 
     getCityName();
   }, []);
 
-  if (isInitializing) {
-    return <div>Initializing...</div>;
-  }
+  // if (isInitializing) {
+  //   return <div>Initializing...</div>;
+  // }
 
   if (!token) {
     console.log("No token, rendering Login component");
@@ -180,7 +212,7 @@ function App() {
   if (isLoading) {
     console.log("Is loading, rendering LoadingSequence component");
     return (
-      <div className="bg-black"> {/* Added black background */}
+      <div className="bg-black">
         <LoadingSequence onLoadingComplete={handleLoadingComplete} onMusicStart={handleMusicStart} />
       </div>
     );
@@ -191,7 +223,7 @@ function App() {
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <ThemeManager>
         <Router>
-          <div className="bg-black min-h-screen"> {/* Changed to black background */}
+          <div className="bg-black min-h-screen">
             <AppContent 
               token={token}
               isPlaying={isPlaying}
@@ -200,6 +232,8 @@ function App() {
               playerControls={playerControls}
               onLogout={handleLogout}
               isIntro={isIntro}
+              theme={theme}
+              setTheme={setTheme}
             />
             <Player
               token={token}
@@ -212,7 +246,7 @@ function App() {
               artist={currentArtist}
               score={0} // Assuming score is not used here
               trackUrl={currentSong?.external_urls?.spotify}
-              city={city} // Pass the city state here
+              city={cityName} // Pass the city state here
             />
           </div>
         </Router>

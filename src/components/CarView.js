@@ -1,39 +1,56 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback, Suspense, useContext } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Text, useGLTF } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Text, useGLTF, Box } from '@react-three/drei';
 import { EffectComposer, Bloom, Pixelation } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Canvas } from '@react-three/fiber';
 import { Effect } from 'postprocessing';
 import { Uniform } from 'three';
 import { debounce } from 'lodash';
-import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow } from './SharedComponents';
+import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow, ViewSwitcher, ThemeSelector } from './SharedComponents';
 import CRTEffect from './CRTEffect';
 import { themes, ThemeContext } from '../themes';
 import { useNavigate } from 'react-router-dom';
 
-// Theme selector component
-function ThemeSelector({ position, onPositionChange }) {
-  const { theme, setTheme } = useContext(ThemeContext);
+// ... (keep other imports)
 
-  return (
-    <RetroWindow title="Theme Selector" position={position} onPositionChange={onPositionChange}>
-      <select 
-        value={theme} 
-        onChange={(e) => setTheme(e.target.value)}
-        style={{
-          backgroundColor: themes[theme].secondary,
-          color: themes[theme].text
-        }}
-        className="px-2 py-1 rounded w-full"
-      >
-        <option value="default">Default</option>
-        <option value="monochrome">Monochrome</option>
-        <option value="cute">Materials Girl</option>
-      </select>
-    </RetroWindow>
-  );
-}
+// Modify the loadModelWithRetry function
+const loadModelWithRetry = (url, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const loadManager = new THREE.LoadingManager();
+    loadManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+      console.log(`Loading file: ${url}. Loaded ${itemsLoaded} of ${itemsTotal} files.`);
+      onProgress(itemsLoaded / itemsTotal);
+    };
+
+    const loader = new GLTFLoader(loadManager);
+    const tryLoad = (retryCount = 0) => {
+      loader.load(
+        url,
+        (gltf) => {
+          console.log('Model loaded successfully');
+          resolve(gltf);
+        },
+        (progress) => {
+          console.log(`Loading progress: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+        },
+        (error) => {
+          console.error('Error loading model:', error);
+          if (retryCount < 3) {
+            console.log(`Retrying... Attempt ${retryCount + 1}`);
+            setTimeout(() => tryLoad(retryCount + 1), 1000 * (retryCount + 1));
+          } else {
+            console.error('Failed to load model after multiple attempts');
+            reject(error);
+          }
+        }
+      );
+    };
+
+    tryLoad();
+  });
+};
 
 class ThemeFilterEffect extends Effect {
   constructor({ intensity = 1.0, theme = 'default' } = {}) {
@@ -76,16 +93,41 @@ function ThemeFilter({ intensity = 1, theme }) {
 }
 
 function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious }) {
-  const { scene } = useGLTF('/models/Flying_Car-.gltf', true);
+  const [model, setModel] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [loadProgress, setLoadProgress] = useState(0);
   const modelRef = useRef();
   const [carTurnAngle, setCarTurnAngle] = useState(0);
   const targetTurnAngle = useRef(0);
   const { theme } = useContext(ThemeContext);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (scene) {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    loadModelWithRetry('/models/Flying_Car-.gltf', setLoadProgress)
+      .then((gltf) => {
+        if (mountedRef.current) {
+          setModel(gltf.scene);
+          setLoadError(null);
+        }
+      })
+      .catch((error) => {
+        console.error('Final error loading model:', error);
+        if (mountedRef.current) {
+          setLoadError("Failed to load car model. Using fallback.");
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    if (model && mountedRef.current) {
       console.log("Updating car model with theme:", theme);
-      scene.traverse((child) => {
+      model.traverse((child) => {
         if (child.isMesh) {
           if (child.name === "Windshield" || child.name.toLowerCase().includes('glass')) {
             child.material = new THREE.MeshPhysicalMaterial({
@@ -98,7 +140,6 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
               roughness: 0.1,
             });
           } else {
-            // Update existing material or create a new one
             if (!child.material.isMeshStandardMaterial) {
               child.material = new THREE.MeshStandardMaterial();
             }
@@ -110,7 +151,7 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
         }
       });
     }
-  }, [scene, theme]);
+  }, [model, theme]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -155,13 +196,14 @@ function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _on
     }
   });
 
-  if (!scene) {
-    return null;
+  if (loadError) {
+    console.log('Rendering fallback model');
+    return <Box args={[2, 1, 3]} material-color={themes[theme].primary} />;
   }
 
   return (
     <primitive 
-      object={scene} 
+      object={model} 
       ref={modelRef} 
       position={[-0.70, -1.70, -0.80]} 
       rotation={[0, 0, 0]} 
@@ -309,13 +351,19 @@ function Dust({ count, size, speed, color }) {
 
 function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI }) {
   const { theme } = useContext(ThemeContext);
+  const [sceneReady, setSceneReady] = useState(false);
+
+  useEffect(() => {
+    // We'll consider the scene ready immediately, as the CarModel component will handle its own loading
+    setSceneReady(true);
+  }, []);
 
   useEffect(() => {
     console.log("Scene rendered with dust parameters:", { dustSize, dustCount, dustSpeed });
   }, [dustSize, dustCount, dustSpeed]);
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<Text color="white" fontSize={0.5} position={[0, 1, 0]}>Loading scene components...</Text>}>
       <ambientLight intensity={0.5} color={new THREE.Color(themes[theme].primary)} />
       <directionalLight position={[5, 5, 5]} intensity={1} color={new THREE.Color(themes[theme].primary)} />
       <directionalLight position={[-5, 5, 5]} intensity={0.5} color={new THREE.Color(themes[theme].secondary)} />
@@ -488,33 +536,7 @@ function PixelationSlider({ pixelSize, setPixelSize, position, onPositionChange 
   );
 }
 
-function ViewSwitcher({ position, onPositionChange }) {
-  const navigate = useNavigate();
-  const { theme } = useContext(ThemeContext);
-
-  const handleViewSwitch = () => {
-    navigate('/visualizer');
-  };
-
-  return (
-    <RetroWindow title="View Switcher" position={position} onPositionChange={onPositionChange}>
-      <div className="flex flex-col items-center">
-        <button 
-          onClick={handleViewSwitch}
-          style={{
-            backgroundColor: themes[theme].secondary,
-            color: themes[theme].text
-          }}
-          className="px-4 py-2 rounded transition-colors duration-300 hover:opacity-80 w-full text-center"
-        >
-          Switch to Visualizer View
-        </button>
-      </div>
-    </RetroWindow>
-  );
-}
-
-export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, playerControls }) {
+export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, onLogout, playerControls, onSwitchView, theme, setTheme }) {
   const [viewMode, setViewMode] = useState('firstPerson');
   const [zoom, setZoom] = useState(0.47);
   const [pixelSize, setPixelSize] = useState(0.3); // Change initial value to 0.01
@@ -523,7 +545,6 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
   const [dustSpeed] = useState(5);
   const [volume, setVolume] = useState(50);  // Initial volume set to 50%
   const fov = 75;
-  const [theme, setTheme] = useState('default');
 
   const [windowPositions, setWindowPositions] = useState({
     pixelation: { x: 20, y: 80 },
@@ -643,8 +664,10 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
                 onPositionChange={(newPos) => updateWindowPosition('merch', newPos)}
               />
               <ViewSwitcher 
+                currentView="car"
                 position={windowPositions.switcher}
                 onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
+                handleViewSwitch={onSwitchView}
               />
               <ThemeSelector 
                 position={windowPositions.themeSelector}
@@ -652,11 +675,16 @@ export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevi
               />
             </div>
           </div>
+
+          {/* Add a button to switch views */}
+          <button 
+            onClick={onSwitchView}
+            className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Switch to Visualizer
+          </button>
         </div>
       </CRTEffect>
     </ThemeContext.Provider>
   );
 }
-
-// Preload the model
-useGLTF.preload('/models/Flying_Car-.gltf');

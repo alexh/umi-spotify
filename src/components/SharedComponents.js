@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { ThemeContext, themes } from '../themes';  // Update this line
+import { useNavigate } from 'react-router-dom';
 
 // Add this function at the top of the file
 function isMobileDevice() {
@@ -133,7 +134,7 @@ export function NowPlayingOverlay({ currentSong, artist, score, _isMobile, track
     <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-50 font-receipt p-2" style={{ color: currentTheme.text }}>
       <div className="border-2 p-2 flex items-center" style={{ borderColor: currentTheme.secondary }}>
         {!localIsMobile && <div className="text-xl whitespace-nowrap pr-4" style={{ userSelect: 'none' }}>Score: {score || 0}</div>}
-        <div className="flex-grow overflow-hidden whitespace-nowrap">
+        <div className="flex-grow overflow-hidden whitespace-nowrap" key={theme}>
           <div className="inline-block animate-marquee">
             {[...Array(10)].map((_, index) => (
               <span key={index} className="inline-flex items-center mr-8">
@@ -345,18 +346,48 @@ export function LogoutWindow({ onLogout, position, onPositionChange }) {
   );
 }
 
-export function ViewSwitcher({ position, onPositionChange, currentView }) {
+export function ThemeSelector({ position, onPositionChange }) {
+  const { theme, setTheme } = useContext(ThemeContext);
+
+  return (
+    <RetroWindow title="Theme Selector" position={position} onPositionChange={onPositionChange}>
+      <select 
+        value={theme} 
+        onChange={(e) => setTheme(e.target.value)}
+        className="bg-pantone-165 text-pantone-165-darker px-2 py-1 rounded"
+        style={{ backgroundColor: themes[theme].primary, color: themes[theme].text }}
+      >
+        <option value="default">Default</option>
+        <option value="monochrome">Monochrome</option>
+        <option value="night">Night Rider</option>
+        <option value="cute">Materials Girl</option>
+        <option value="ocean">Under The Sea</option>
+        <option value="desert">Lisan al Gaib</option>
+        <option value="arctic">Tundra</option>
+        <option value="forest">Camo</option>
+        <option value="neon">Neon</option>
+        <option value="cog">Cog</option>
+      </select>
+    </RetroWindow>
+  );
+}
+
+export function ViewSwitcher({ position, onPositionChange, currentView, handleViewSwitch}) {
+  // const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-  console.log('currentView');
-  console.log(currentView);
+
   const oppositeView = currentView === 'visualizer' ? 'car' : 'visualizer';
   const buttonText = `Switch to ${oppositeView === 'visualizer' ? 'Visualizer' : 'Car'} View`;
+
+  // const handleViewSwitch = () => {
+  //   navigate(`/${oppositeView}`);
+  // };
 
   return (
     <RetroWindow title="View Switcher" position={position} onPositionChange={onPositionChange}>
       <div className="flex flex-col items-center">
-        <a 
-          href={`/${oppositeView}`}
+        <button 
+          onClick={handleViewSwitch}
           style={{
             backgroundColor: themes[theme].secondary,
             color: themes[theme].text
@@ -364,11 +395,12 @@ export function ViewSwitcher({ position, onPositionChange, currentView }) {
           className="px-4 py-2 rounded transition-colors duration-300 hover:opacity-80 w-full text-center"
         >
           {buttonText}
-        </a>
+        </button>
       </div>
     </RetroWindow>
   );
 }
+
 
 export function ThemeManager({ children }) {
   const { theme } = useContext(ThemeContext);

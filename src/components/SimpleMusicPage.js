@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef, useContext } from 'react';
-import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow, LogoutWindow, ViewSwitcher } from './SharedComponents';
+import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow, LogoutWindow, ViewSwitcher, ThemeSelector } from './SharedComponents';
 import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
 import EditorEffects from './EditorEffects';
@@ -64,35 +64,7 @@ function AlbumArtWindow({ albumArt, isIntro, position, onPositionChange, trackUr
   );
 }
 
-// Theme selector component
-function ThemeSelector({ position, onPositionChange }) {
-  const { theme, setTheme } = useContext(ThemeContext);
-
-  return (
-    <RetroWindow title="Theme Selector" position={position} onPositionChange={onPositionChange}>
-      <select 
-        value={theme} 
-        onChange={(e) => setTheme(e.target.value)}
-        className="bg-pantone-165 text-pantone-165-darker px-2 py-1 rounded"
-        style={{ backgroundColor: themes[theme].primary, color: themes[theme].text }}
-      >
-        <option value="default">Default</option>
-        <option value="monochrome">Monochrome</option>
-        <option value="night">Night Rider</option>
-        <option value="cute">Materials Girl</option>
-        <option value="ocean">Ocean</option>
-        <option value="desert">Desert</option>
-        <option value="arctic">Arctic</option>
-        <option value="sunset">Sunset</option>
-        <option value="forest">Camo</option>
-        <option value="neon">Neon</option>
-        <option value="cog">Cog</option>
-      </select>
-    </RetroWindow>
-  );
-}
-
-function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro }) {
+function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls, onLogout, isIntro, onSwitchView, theme, setTheme }) {
   console.log('SimpleMusicPage rendering', { isPlaying, currentSong, currentArtist, playerControls });
 
   const [tempo, setTempo] = useState(null);
@@ -120,7 +92,6 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
   const konamiCode = useRef([]);
   const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
   const [isInverted] = useState(false);
-  const [theme, setTheme] = useState('default');
 
   useEffect(() => {
     const handleResize = () => {
@@ -254,6 +225,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
           position={windowPositions.switcher}
           onPositionChange={(newPos) => updateWindowPosition('switcher', newPos)}
           currentView="visualizer"
+          handleViewSwitch={onSwitchView}
         />
       ),
       <LogoutWindow 
