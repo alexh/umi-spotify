@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import CRTEffect from './CRTEffect';
 import MatrixRain from './MatrixRain';
@@ -240,7 +240,7 @@ const AnimatedButton = ({ children, onClick }) => {
     return () => button.removeEventListener('mousemove', handleMouseMove);
   }, [isHovered]);
 
-  const generateSparkle = (isChild = false) => {
+  const generateSparkle = useCallback((isChild = false) => {
     const side = Math.floor(Math.random() * 4);
     const size = isChild ? 3 + Math.random() * 3 : 4 + Math.random() * 5; // Increased size
     const distance = isChild ? 100 + Math.random() * 150 : 300 + Math.random() * 400; // Increased distance
@@ -285,7 +285,7 @@ const AnimatedButton = ({ children, onClick }) => {
       },
       children: isChild ? [] : Array(5).fill().map(() => generateSparkle(true)) // Increased to 5 child sparkles
     };
-  };
+  }, []);
 
   useEffect(() => {
     if (isHovered) {
@@ -298,7 +298,7 @@ const AnimatedButton = ({ children, onClick }) => {
 
       return () => clearInterval(interval);
     }
-  }, [isHovered]);
+  }, [isHovered, generateSparkle]);
 
   const renderSparkle = (sparkle) => (
     <React.Fragment key={sparkle.id}>
@@ -355,7 +355,7 @@ function SparkleText({ children }) {
   const textRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const generateSparkle = (isChild = false) => {
+  const generateSparkle = useCallback((isChild = false) => {
     const rect = textRef.current.getBoundingClientRect();
     const size = isChild ? 3 + Math.random() * 3 : 4 + Math.random() * 5;
     const distance = isChild ? 100 + Math.random() * 150 : 300 + Math.random() * 400;
@@ -376,7 +376,7 @@ function SparkleText({ children }) {
       },
       children: isChild ? [] : Array(5).fill().map(() => generateSparkle(true))
     };
-  };
+  }, []);
 
   useEffect(() => {
     if (isHovered) {
@@ -391,7 +391,7 @@ function SparkleText({ children }) {
     } else {
       setSparkles([]);
     }
-  }, [isHovered]);
+  }, [generateSparkle, isHovered]);
 
   const renderSparkle = (sparkle) => (
     <React.Fragment key={sparkle.id}>
@@ -524,7 +524,7 @@ function LoadingSequence({ onLoadingComplete, onMusicStart }) {
     return () => {
       clearTimeout(timer);
     };
-  }, []);
+  }, [loadingSteps.length]);
 
   const handleStart = () => {
     // Immediately complete loading and advance to main screen

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './EditorEffects.css'; // Make sure to create this CSS file
 
 const EditorEffects = ({ children }) => {
   const [currentEffect, setCurrentEffect] = useState(null);
 
-  const effects = {
+  const effects = useMemo(() => ({
     none: {
       name: 'None',
       style: {},
@@ -45,7 +45,7 @@ const EditorEffects = ({ children }) => {
         filter: 'contrast(200%) saturate(200%)',
       },
     },
-  };
+  }), []);
 
   useEffect(() => {
     const applyRandomEffect = () => {
@@ -73,7 +73,7 @@ const EditorEffects = ({ children }) => {
     }, 60000);
 
     return () => clearTimeout(initialDelay);
-  }, []);
+  }, [effects]);
 
   if (!currentEffect || currentEffect.name === 'None') return children;
 

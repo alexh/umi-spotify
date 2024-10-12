@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { ThemeContext, themes } from '../themes';  // Update this line
-import { useNavigate } from 'react-router-dom';
 
 // Add this function at the top of the file
 function isMobileDevice() {
@@ -222,16 +221,16 @@ export function OrangeSlider({ value, onChange, min = 0, max = 100 }) {
     if (isDragging) {
       updateValue(e);
     }
-  }, [isDragging]);
+  }, [isDragging, updateValue]);
 
-  const updateValue = (e) => {
+  const updateValue = useCallback((e) => {
     const slider = sliderRef.current;
     const rect = slider.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     const newValue = Math.round(percentage * (max - min) + min);
     onChange(newValue);
-  };
+  }, [max, min, onChange]);
 
   useEffect(() => {
     document.addEventListener('mousemove', handleMouseMove);
@@ -304,7 +303,6 @@ export function MerchWindow({ position, onPositionChange }) {
   useEffect(() => {
     const handleResize = () => {
       const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-      const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
       
       let width, height;
       if (vw < 640) { // Small screens

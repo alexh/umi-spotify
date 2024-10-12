@@ -395,6 +395,7 @@ function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, 
   }, [isPlaying]);
 
   useEffect(() => {
+    const mountElement = mountRef.current;
     const width = mountRef.current.clientWidth;
     const height = mountRef.current.clientHeight;
 
@@ -550,8 +551,8 @@ function Visualizer({ isPlaying, _volume, audioAnalysis, updateScore, isMobile, 
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (mountElement && renderer.domElement.parentNode === mountElement) {
+        mountElement.removeChild(renderer.domElement);
       }
       scene.traverse((object) => {
         if (object.geometry) {

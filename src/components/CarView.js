@@ -94,12 +94,11 @@ function ThemeFilter({ intensity = 1, theme }) {
 function CarModel({ _token, _currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious }) {
   const [model, setModel] = useState(null);
   const [loadError, setLoadError] = useState(null);
-  const [loadProgress, setLoadProgress] = useState(0);
   const modelRef = useRef();
   const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
-    loadModelWithRetry('/models/Flying_Car-.gltf', setLoadProgress)
+    loadModelWithRetry('/models/Flying_Car-.gltf')
       .then((gltf) => {
         setModel(gltf.scene);
         setLoadError(null);
@@ -302,7 +301,7 @@ function Scene({ token, currentSong, children, orbitControlsRef, pixelSize, dust
   );
 }
 
-function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevious, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI, fov, viewMode }) {
+function CarView3D({ token, currentSong, _isPlaying, _onPlayPause, _onNext, _onPrevious, zoom, pixelSize, dustSize, dustCount, dustSpeed, isInteractingWithUI, fov, viewMode }) {
   const orbitControlsRef = useRef();
   const [carTurnAngle, setCarTurnAngle] = useState(0);
   const [currentFov, setCurrentFov] = useState(fov);
@@ -333,7 +332,7 @@ function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevi
     };
   }, []);
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     // Update car turn angle smoothly
     const turnSpeed = 0.5;
     if (keys.ArrowLeft) {
@@ -378,25 +377,25 @@ function CarView3D({ token, currentSong, isPlaying, onPlayPause, onNext, onPrevi
 
 function MusicControls({ isPlaying, onPlayPause, onNext, onPrevious, volume, onVolumeChange, position, onPositionChange }) {
   const debouncedPlayPause = useCallback(
-    debounce(() => {
-      onPlayPause();
-    }, 300, { leading: true, trailing: false }),
+    () => {
+      debounce(onPlayPause, 300)();
+    },
     [onPlayPause]
   );
 
   const debouncedNext = useCallback(
-    debounce(() => {
-      onNext();
-    }, 300, { leading: true, trailing: false }),
+    () => {
+      debounce(onNext, 300)();
+    },
     [onNext]
   );
 
   const debouncedPrevious = useCallback(
-    debounce(() => {
-      onPrevious();
-    }, 300, { leading: true, trailing: false }),
-    [onPrevious]
-  );
+    () => {
+    debounce(onPrevious, 300)();
+  },
+  [onPrevious]
+);
 
   return (
     <RetroWindow title="Music Controls" position={position} onPositionChange={onPositionChange}>
@@ -434,7 +433,7 @@ function PixelationSlider({ pixelSize, setPixelSize, position, onPositionChange 
   );
 }
 
-export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, onLogout, playerControls, onSwitchView, theme, setTheme }) {
+export default function CarView({ token, isPlaying, onPlayPause, onNext, onPrevious, currentSong, currentArtist, _onLogout, playerControls, onSwitchView, theme, setTheme }) {
   const [viewMode, setViewMode] = useState('firstPerson');
   const [zoom, setZoom] = useState(0.47);
   const [pixelSize, setPixelSize] = useState(0.3); // Change initial value to 0.01

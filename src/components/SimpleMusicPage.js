@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { RetroWindow, NowPlayingOverlay, OrangeSlider, MerchWindow, LogoutWindow, ViewSwitcher, ThemeSelector } from './SharedComponents';
 import Visualizer from './Visualizer';
 import CRTEffect from './CRTEffect';
@@ -91,7 +91,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
 
   const [showCoupon, setShowCoupon] = useState(false);
   const konamiCode = useRef([]);
-  const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13]; // ↑ ↑ ↓ ↓ ← → ← → B A Enter
+  const konamiSequence = useMemo(() => [38, 38, 40, 40, 37, 39, 37, 39, 66, 65, 13], []); // ↑ ↑ ↓ ↓ ← → ← → B A Enter
   const [isInverted] = useState(false);
 
   useEffect(() => {
@@ -151,7 +151,7 @@ function SimpleMusicPage({ isPlaying, currentSong, currentArtist, playerControls
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [konamiSequence]);
 
   const handleVolumeChange = useCallback((newVolume) => {
     setVolume(newVolume);

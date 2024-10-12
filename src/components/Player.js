@@ -260,7 +260,7 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
     if (isReady && globalPlayer) {
       updatePlayerControls();
     }
-  }, [isReady, globalPlayer, updatePlayerControls]);
+  }, [isReady, updatePlayerControls]);
 
   useEffect(() => {
     const handleTrackChange = async () => {
@@ -288,7 +288,7 @@ function Player({ token, _isPlaying, onPlaybackStateChange, setPlayerControls })
         globalPlayer.removeListener('player_state_changed', handleTrackChange);
       }
     };
-  }, [globalPlayer, fetchAudioAnalysis, onPlaybackStateChange]);
+  }, [fetchAudioAnalysis, onPlaybackStateChange]);
 
   useEffect(() => {
     if (activeDevice) {

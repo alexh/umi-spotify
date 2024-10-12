@@ -214,6 +214,8 @@ const NutsAndBolts = () => {
     animate();
     window.addEventListener('resize', handleResize);
 
+    const currentRef = mountRef.current;
+
     return () => {
       setIsInitialized(false);
       window.removeEventListener('resize', handleResize);
@@ -229,8 +231,8 @@ const NutsAndBolts = () => {
       if (scene) {
         scene.clear();
       }
-      if (mountRef.current && renderer) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (currentRef && renderer) {
+        currentRef.removeChild(renderer.domElement);
       }
     };
   }, [isInitialized]);
