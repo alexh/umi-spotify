@@ -6,7 +6,7 @@ import Player from './components/Player';
 import SimpleMusicPage from './components/SimpleMusicPage';
 import { LoadingSequence } from './components/StartScreen';
 import { getAccessToken, getUserProfile } from './spotifyApi';
-import { ThemeContext, themes } from './themes';
+import { ThemeContext } from './themes';
 import { ThemeManager } from './components/SharedComponents';
 import { NowPlayingOverlay } from './components/SharedComponents';
 import { fetchCityName } from './utils/locationUtils'; // Import the fetchCityName function
@@ -96,7 +96,7 @@ function App() {
     console.log("Loading sequence completed");
     setIsLoading(false);
     attemptAutoplay();
-  }, []);
+  }, [attemptAutoplay]);
 
   const attemptAutoplay = useCallback(() => {
     if (sdkReady && !isLoading && !attemptedAutoplayRef.current) {
