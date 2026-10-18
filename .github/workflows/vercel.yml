@@ -1,5 +1,6 @@
 # Deploys to Vercel through the shared workflow in alexh/vercel-deploy.
 #   push to main → production; any other branch → preview.
+# The project id lives in the repo variable VERCEL_PROJECT_ID; the token in the VERCEL_TOKEN secret.
 name: Vercel
 
 on:
@@ -11,5 +12,6 @@ jobs:
   vercel:
     uses: alexh/vercel-deploy/.github/workflows/deploy.yml@main
     with:
-      project-id: prj_EU4xxnkrOQqaHov7zmew07blNVNm
+      project-id: ${{ vars.VERCEL_PROJECT_ID }}
+      scope: utility-materials
     secrets: inherit
